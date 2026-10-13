@@ -6,7 +6,10 @@ import NotificationCenter from './components/NotificationCenter.vue'
 import { navigation } from './navigation'
 const route = useRoute()
 const router = useRouter()
-function logout() { signOut(); router.push('/login') }
+const logoutDialog = ref(null)
+function requestLogout() { logoutDialog.value.showModal() }
+function cancelLogout() { logoutDialog.value.close() }
+function logout() { cancelLogout(); signOut(); router.push('/login') }
 const { projectData } = inject('dataApi')
 const dark = ref(true), block = ref('all'), menu = ref(false)
 provide('workspace-theme', dark)
@@ -29,13 +32,29 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keydown))
     </aside>
     <div class="workspace">
       <header class="topbar"><button class="icon-button mobile-menu" aria-label="Toggle navigation" @click="menu = !menu"><i aria-hidden="true" class="fa-solid fa-bars"></i></button><div class="breadcrumb">Calypso <span>/</span> <strong>{{ title }}</strong></div><div class="header-tools"><span class="demo"><span class="status-dot"></span> Demo data</span><button class="icon-button" :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'" @click="dark = !dark"><i aria-hidden="true" :class="`fa-solid fa-${dark ? 'sun' : 'moon'}`"></i></button><NotificationCenter/><span class="avatar" title="Local workspace">CL</span></div></header>
-      <button class="icon-button logout-button" aria-label="Sign out" title="Sign out" @click="logout"><i aria-hidden="true" class="fa-solid fa-arrow-right-from-bracket"></i></button>
+      <button class="icon-button logout-button" aria-label="Sign out" title="Sign out" @click="requestLogout"><i aria-hidden="true" class="fa-solid fa-arrow-right-from-bracket"></i></button>
       <RouterView/>
     </div>
+    <dialog ref="logoutDialog" class="logout-dialog" aria-labelledby="logout-title" aria-describedby="logout-description">
+      <div class="logout-symbol"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></div>
+      <h2 id="logout-title">Sign out of Calypso?</h2>
+      <p id="logout-description">You’ll need to sign in again to access your workspace.</p>
+      <div class="logout-actions">
+        <button type="button" autofocus @click="cancelLogout">Cancel</button>
+        <button type="button" class="primary" @click="logout">Sign out</button>
+      </div>
+    </dialog>
   </div>
 </template>
 
 <style scoped>
+.logout-dialog { width: min(420px, calc(100vw - 32px)); padding: 28px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 24px 80px #0005; }
+.logout-dialog::backdrop { background: #050c17aa; backdrop-filter: blur(4px); }
+.logout-symbol { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 20px; border-radius: 12px; background: var(--soft); color: #64bed0; font-size: 18px; }
+.logout-dialog h2 { margin: 0; font-size: 21px; }
+.logout-dialog p { margin: 12px 0 26px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.logout-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.logout-actions button { min-width: 88px; }
 .logout-button { position: fixed; bottom: 20px; left: 202px; z-index: 31; color: #aab8cb; }
 @media (min-width: 761px) and (max-width: 1150px) { .logout-button { left: 178px; } }
 @media (max-width: 760px) { .logout-button { position: absolute; top: 72px; right: 16px; bottom: auto; left: auto; z-index: 10; } }

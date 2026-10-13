@@ -21,9 +21,9 @@ function submit() {
     <section class="login-story" aria-label="Calypso digital twin">
       <a class="login-brand" href="/login" aria-label="Calypso home"><img src="/brand.png" alt="Calypso" /></a>
       <div class="login-story-copy">
-        <span class="login-kicker"><span></span> THE CONNECTED CAMPUS</span>
-        <h1>Your campus.<br />A clearer <em>perspective.</em></h1>
-        <p>Bring your buildings, energy, and operations together in one intelligent workspace.</p>
+        <span class="login-kicker"><span></span> CONNECTED BUILDINGS. ONE SYSTEM.</span>
+        <h1>Your buildings.<br />A clearer <em>perspective.</em></h1>
+        <p>Manage systems, energy, and operations across all your buildings in one intelligent workspace.</p>
       </div>
       <div class="campus-art" aria-hidden="true">
         <div class="campus-orbit orbit-one"></div><div class="campus-orbit orbit-two"></div>
@@ -40,9 +40,9 @@ function submit() {
           <path d="m218 291 71-38 68 35M376 18V0M549 161l33-18" stroke="#8ce1cc" stroke-dasharray="4 5"/>
           <circle cx="218" cy="291" r="5" fill="#8ce1cc"/><circle cx="357" cy="288" r="5" fill="#8ce1cc"/><circle cx="582" cy="143" r="5" fill="#8ce1cc"/>
         </svg>
-        <div class="campus-pill"><span></span> One campus. Connected.</div>
+        <div class="campus-pill"><span></span> Multiple buildings. One system.</div>
       </div>
-      <div class="login-story-footer"><span>DIGITAL TWIN PLATFORM</span><span>Built for a smarter tomorrow <i class="fa-solid fa-arrow-up-right-from-square"></i></span></div>
+      <div class="login-story-footer"><span>BUILDING MANAGEMENT SYSTEM</span><span>Built for a smarter tomorrow <i class="fa-solid fa-arrow-up-right-from-square"></i></span></div>
     </section>
 
     <section class="login-panel">
@@ -63,7 +63,7 @@ function submit() {
         <div class="login-demo"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><div><strong>Explore the demo</strong><p>Username <code>admin</code><span> / </span>Password <code>admin</code></p></div></div>
         <p class="login-form-foot">A connected view. Better decisions.</p>
       </div>
-      <div class="login-panel-footer"><span>© {{ new Date().getFullYear() }} Calypso</span><span>Campus intelligence, simplified.</span></div>
+      <div class="login-panel-footer"><span>© {{ new Date().getFullYear() }} Calypso</span><span>Building intelligence, simplified.</span></div>
     </section>
   </div>
 </template>
