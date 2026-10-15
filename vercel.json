@@ -3,6 +3,12 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "headers": [
+    { "source": "/visualiser/Build/:file*.gz", "headers": [{ "key":"Content-Encoding", "value":"gzip" }] },
+    { "source": "/visualiser/Build/:file*.wasm.gz", "headers": [{ "key":"Content-Type", "value":"application/wasm" }] },
+    { "source": "/visualiser/Build/:file*.js.gz", "headers": [{ "key":"Content-Type", "value":"application/javascript" }] },
+    { "source": "/visualiser/Build/:file*.data.gz", "headers": [{ "key":"Content-Type", "value":"application/octet-stream" }] }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

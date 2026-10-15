@@ -26,7 +26,7 @@ test('dashboard saves customized order and restores it after reload; cancel disc
 test('block filtering, data updates, management navigation and preloaded twin', async ({ page }) => {
   await page.addInitScript(() => sessionStorage.setItem('calypso-demo-session', 'admin'))
   let twinRequests = 0
-  await page.route('http://115.66.232.13:25565/**', route => {
+  await page.route('http://127.0.0.1:5175/visualiser/**', route => {
     twinRequests++
     return route.fulfill({ contentType: 'text/html', body: '<h1>Digital twin ready</h1><script>window.addEventListener("message", event => { if (typeof event.data !== "string") throw new Error("Unity requires a string argument"); document.querySelector("h1").textContent = JSON.stringify(JSON.parse(event.data)) })</script>' })
   })
@@ -43,7 +43,7 @@ test('block filtering, data updates, management navigation and preloaded twin', 
   await page.getByRole('tab', { name: /Digital Twin/ }).click()
   await expect(page.locator('#twin-panel')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Send Command', exact: true })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: 'Open in new tab' })).toHaveAttribute('href', 'http://115.66.232.13:25565/')
+  await expect(page.getByRole('link', { name: 'Open in new tab' })).toHaveAttribute('href', 'http://127.0.0.1:5175/visualiser/')
   await expect(page.getByRole('link', { name: 'Open in new tab' })).toHaveAttribute('target', '_blank')
   await page.getByRole('button', { name: 'Fullscreen digital twin' }).click()
   await expect.poll(() => page.evaluate(() => document.fullscreenElement?.className)).toBe('twin-viewer')

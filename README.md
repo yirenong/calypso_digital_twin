@@ -117,3 +117,13 @@ The supplied site hierarchy is Levels 1-5 plus Landscape. public/calypso-data.js
 The demo now has nine energy meters and twelve water meters. Sensor names are editable in public/calypso-data.js or through updateSensor(id, { name: 'New name' }). System IDs, locationIds, systemName and modelNode are included for 3D integration. The public blocks/blockId APIs retain legacy names for compatibility; block-a, block-b and block-c now refer to Level 1, Level 2 and Level 3 respectively. Remaining location IDs are level-4, level-5 and landscape. Public projectData.locations contains all six locations; projectData.systems contains exact system assignments. Null readings mean unavailable; Energy/Water reports exclude unconfigured locations rather than inventing consumption.
 
 All project data is now consolidated in public/calypso-data.js: locations, system assignments, sensor definitions, camera sources, demo readings, history generation and integration APIs. It has no imports or dependencies on other local data modules. Import that single URL in your 3D project. Existing exports remain available.
+# Local Unity visualiser
+
+The exported build in `src/components/Visualiser` is served at `/visualiser/index.html`.
+`visualiser-plugin.js` serves it in Vite development/preview and copies its `index.html`,
+`Build`, and optional `StreamingAssets` folders into `dist/visualiser` during builds.
+The Python/batch server helpers are not published. Gzip and WebAssembly headers are
+configured for both local serving and Vercel in `vercel.json`.
+Replace the exported files in that source folder and rebuild to update Unity.
+The dashboard iframe, new-tab link, and command origin use the local deployment URL.
+

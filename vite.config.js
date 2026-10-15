@@ -1,3 +1,4 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-export default defineConfig({ plugins: [vue()] })
+import { visualiserPlugin } from './visualiser-plugin'
+export default defineConfig({ plugins: [vue(), visualiserPlugin()] })

@@ -3,13 +3,13 @@ async function setup(page){
  await page.setViewportSize({width:1920,height:1080})
  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
  let requests=0
- await page.route('http://115.66.232.13:25565/**',route=>{requests++;return route.fulfill({contentType:'text/html; charset=utf-8',body:'<style>body{margin:0;height:100vh;display:grid;place-items:center;background:radial-gradient(ellipse at center,#214456,#091725 70%);color:#75b9cb;font:13px sans-serif;letter-spacing:3px}div{padding:80px 50px;transform:skewY(-8deg);border:1px solid #6da8ba50;background:repeating-linear-gradient(90deg,#517f8f40 0 18px,#193a4940 18px 20px);box-shadow:30px 40px 80px #0008}</style><div>CALYPSO · 3D TEST VIEW</div><script>window.commands=[];addEventListener("message",e=>{if(typeof e.data==="string")commands.push(JSON.parse(e.data))})</script>'})})
+ await page.route('http://127.0.0.1:5175/visualiser/**',route=>{requests++;return route.fulfill({contentType:'text/html; charset=utf-8',body:'<style>body{margin:0;height:100vh;display:grid;place-items:center;background:radial-gradient(ellipse at center,#214456,#091725 70%);color:#75b9cb;font:13px sans-serif;letter-spacing:3px}div{padding:80px 50px;transform:skewY(-8deg);border:1px solid #6da8ba50;background:repeating-linear-gradient(90deg,#517f8f40 0 18px,#193a4940 18px 20px);box-shadow:30px 40px 80px #0008}</style><div>CALYPSO · 3D TEST VIEW</div><script>window.commands=[];addEventListener("message",e=>{if(typeof e.data==="string")commands.push(JSON.parse(e.data))})</script>'})})
  await page.goto('/dashboard/digital-twin');await expect(page.getByRole('tab',{name:'Overview',exact:true})).toHaveAttribute('aria-selected','true')
  return ()=>requests
 }
 test('visibility switches send boolean Unity commands without reloading the iframe',async({page})=>{
  const count=await setup(page)
- const frame=page.frames().find(frame=>frame.url().startsWith('http://115.66.232.13:25565/'))
+ const frame=page.frames().find(frame=>frame.url().startsWith('http://127.0.0.1:5175/visualiser/'))
  for(const [label,type] of [['Show all levels','ShowAllLevels'],['Show all systems','ShowAllSystems']]){
   const control=page.getByRole('switch',{name:label,exact:true})
   await control.uncheck()

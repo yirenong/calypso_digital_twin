@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test'
 
 test('CCTV card sits alongside charts and replaces them for an individual camera',async({page})=>{
  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
- await page.route('http://115.66.232.13:25565/**',r=>r.fulfill({body:'Unity'}))
+ await page.route('http://127.0.0.1:5175/visualiser/**',r=>r.fulfill({body:'Unity'}))
  await page.goto('/dashboard/digital-twin')
  await page.getByRole('combobox',{name:'Digital twin location'}).selectOption('block-a')
  for(const id of ['energy','water','widget-cctv']) await expect(page.locator(`[data-panel="${id}"]`)).toBeVisible()

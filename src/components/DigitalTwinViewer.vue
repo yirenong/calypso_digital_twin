@@ -1,12 +1,12 @@
 <script setup>
 import { ref } from 'vue'
 defineProps({accent:{type:String,default:'#72d6e8'},showNavigation:{type:Boolean,default:false}})
-const url = 'http://115.66.232.13:25565/'
+const url = `${import.meta.env.BASE_URL}visualiser/index.html`
 const viewer = ref(null), stage = ref(null), unityFrame = ref(null), fullscreenError = ref('')
 function sendCommand(type, data) {
   if (!unityFrame.value?.contentWindow) return false
   const command = { type, data }
-  unityFrame.value.contentWindow.postMessage(JSON.stringify(command), new URL(url).origin)
+  unityFrame.value.contentWindow.postMessage(JSON.stringify(command), new URL(url, window.location.href).origin)
   return true
 }
 defineExpose({ sendCommand })
