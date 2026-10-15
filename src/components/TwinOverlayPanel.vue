@@ -44,7 +44,7 @@ function resizeKeyboard(e){const d={ArrowLeft:[-20,0],ArrowRight:[20,0],ArrowUp:
 </section></Teleport>
 </template>
 <style scoped>
-.twin-overlay-panel{box-sizing:border-box;position:relative;flex-shrink:0;display:flex;flex-direction:column;width:min(var(--panel-width),100%);min-width:0;overflow:hidden;pointer-events:auto;border:1px solid #b8d9ee30;border-radius:10px;background:#102031b0;backdrop-filter:blur(7px);color:#edf7ff;box-shadow:0 5px 20px #0003;z-index:2}
+.twin-overlay-panel{box-sizing:border-box;position:relative;flex-shrink:0;display:flex;flex-direction:column;width:min(var(--panel-width),100%);min-width:0;overflow:hidden;pointer-events:auto;border:1px solid #b8d9ee30;border-radius:10px;background:#102031b0;backdrop-filter:none;color:#edf7ff;box-shadow:0 5px 20px #0003;z-index:2}
 .twin-overlay-panel:focus-within{z-index:5}.editing{border-color:#65bdd470}header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff16;flex-shrink:0}header .panel-grip{flex:1;min-width:0;display:flex;gap:8px;align-items:center;text-align:left;font-size:11px;border:0;background:transparent;padding:10px;color:inherit;touch-action:none;cursor:default}.editing .panel-grip{cursor:grab}button i{margin:0}header .panel-collapse{display:grid;place-items:center;width:28px;height:28px;padding:0;margin:4px;border:0;background:#ffffff08;color:#badbe8}.panel-content{padding:12px;overflow:auto;min-height:0;scrollbar-width:thin}.sized,.chart-panel{height:var(--panel-height)}.sized .panel-content,.chart-panel .panel-content{flex:1;max-height:none}.chart-panel .panel-content{display:flex;flex-direction:column;overflow:hidden}footer{display:flex;justify-content:space-between;align-items:center;padding:5px;border-top:1px solid #ffffff16;flex-shrink:0}footer button{font-size:10px;padding:5px 8px}footer .resize-panel{display:grid;place-items:center;width:28px;height:28px;padding:0;cursor:nwse-resize;touch-action:none;color:#8fddf2;background:#203d50}
 
 
@@ -54,7 +54,7 @@ function resizeKeyboard(e){const d={ArrowLeft:[-20,0],ArrowRight:[20,0],ArrowUp:
 .twin-overlay-panel footer button.resize-panel svg { display:block; flex:0 0 16px; width:16px; height:16px; margin:0; padding:0; }
 </style>
 <style scoped>
-.twin-overlay-panel { border-radius:4px; border-color:#9dc7dd26; background:linear-gradient(120deg,#0a1a2bd4,#10253680); backdrop-filter:blur(4px); box-shadow:0 3px 16px #0003; }
+.twin-overlay-panel { border-radius:4px; border-color:#9dc7dd26; background:linear-gradient(120deg,#0a1a2bd4,#10253680); backdrop-filter:none; box-shadow:0 3px 16px #0003; }
 header { border-left:2px solid var(--twin-accent,#72d6e8); background:#08172570; }
 header .panel-grip { text-transform:uppercase; letter-spacing:.8px; font-size:10px; padding:10px; }
 header .panel-collapse { border-radius:2px; color:var(--twin-accent,#72d6e8); }

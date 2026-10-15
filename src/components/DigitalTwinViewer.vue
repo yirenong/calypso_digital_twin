@@ -1,8 +1,18 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 defineProps({accent:{type:String,default:'#72d6e8'},showNavigation:{type:Boolean,default:false}})
 const url = `${import.meta.env.BASE_URL}visualiser/index.html`
 const viewer = ref(null), stage = ref(null), unityFrame = ref(null), fullscreenError = ref('')
+let observer, visible = false
+function updateActivity() {
+  unityFrame.value?.contentWindow?.postMessage({channel:'calypso-viewer-activity',active:visible && !document.hidden}, window.location.origin)
+}
+onMounted(() => {
+  observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; updateActivity() })
+  observer.observe(viewer.value)
+  document.addEventListener('visibilitychange', updateActivity)
+})
+onBeforeUnmount(() => { observer?.disconnect(); document.removeEventListener('visibilitychange', updateActivity) })
 function sendCommand(type, data) {
   if (!unityFrame.value?.contentWindow) return false
   const command = { type, data }
@@ -19,7 +29,7 @@ async function fullscreen() {
   <div ref="viewer" class="twin-viewer">
     <div class="section-toolbar twin-toolbar"><div><p class="viewer-eyebrow">CONNECTED BUILDING</p><h2>Digital Twin</h2></div><div class="actions"><slot name="actions"/><button aria-label="Fullscreen digital twin" @click="fullscreen"><i aria-hidden="true" class="fa-solid fa-expand"></i> Fullscreen</button><a :href="url" target="_blank" rel="noopener noreferrer"><i aria-hidden="true" class="fa-solid fa-arrow-up-right-from-square"></i> Open in new tab</a></div></div>
     <p v-if="fullscreenError" role="status">{{ fullscreenError }}</p>
-    <div ref="stage" class="twin-stage" :style="{'--twin-accent':accent}"><iframe id="unityFrame" ref="unityFrame" :src="url" title="Calypso digital twin" sandbox="allow-scripts allow-same-origin allow-pointer-lock" loading="eager" allow="fullscreen" allowfullscreen></iframe><div v-if="showNavigation" class="twin-screen-navigation"><slot name="screens"/></div><div class="twin-overlays" :class="{'has-navigation':showNavigation}"><div id="twin-dock-left" class="twin-dock side-dock left-dock"></div><div id="twin-dock-right" class="twin-dock side-dock right-dock"></div><div id="twin-dock-bottom" class="twin-dock bottom-dock"></div><slot/></div></div>
+    <div ref="stage" class="twin-stage" :style="{'--twin-accent':accent}"><iframe id="unityFrame" ref="unityFrame" :src="url" @load="updateActivity" title="Calypso digital twin" sandbox="allow-scripts allow-same-origin allow-pointer-lock" loading="eager" allow="fullscreen" allowfullscreen></iframe><div v-if="showNavigation" class="twin-screen-navigation"><slot name="screens"/></div><div class="twin-overlays" :class="{'has-navigation':showNavigation}"><div id="twin-dock-left" class="twin-dock side-dock left-dock"></div><div id="twin-dock-right" class="twin-dock side-dock right-dock"></div><div id="twin-dock-bottom" class="twin-dock bottom-dock"></div><slot/></div></div>
   </div>
 </template>
 <style scoped>

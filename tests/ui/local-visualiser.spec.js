@@ -17,3 +17,22 @@ test('local Unity build is served with compression headers and embedded locally'
  await expect(page.frameLocator('#unityFrame').locator('#unity-canvas')).toBeVisible()
  await expect.poll(()=>page.frameLocator('#unityFrame').locator('body').evaluate(()=>Boolean(window.gameInstance)),{timeout:60000}).toBe(true)
 })
+
+test('Unity render size is bounded and hidden dashboard pauses without reloading',async({page})=>{
+ await page.setViewportSize({width:3440,height:1440})
+ await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+ let loads=0
+ page.on('request',request=>{if(request.url().endsWith('/visualiser/index.html'))loads++})
+ await page.goto('/dashboard/digital-twin')
+ const body=page.frameLocator('#unityFrame').locator('body')
+ await expect.poll(()=>body.evaluate(()=>Boolean(window.gameInstance)),{timeout:60000}).toBe(true)
+ await expect.poll(()=>body.evaluate(()=>window.runtimePaused)).toBe(false)
+ const size=await body.evaluate(()=>({width:canvas.width,height:canvas.height}))
+ expect(size.width).toBeLessThanOrEqual(1600)
+ expect(size.height).toBeLessThanOrEqual(900)
+ await page.getByRole('tab',{name:'My dashboard',exact:true}).click()
+ await expect.poll(()=>body.evaluate(()=>window.runtimePaused)).toBe(true)
+ await page.getByRole('tab',{name:'Digital Twin',exact:true}).click()
+ await expect.poll(()=>body.evaluate(()=>window.runtimePaused)).toBe(false)
+ expect(loads).toBe(1)
+})
