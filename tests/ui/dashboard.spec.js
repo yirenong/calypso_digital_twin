@@ -23,8 +23,16 @@ test('dashboard saves customized order and restores it after reload; cancel disc
   await expect(page.locator('.widget-grid')).toContainText('Building occupancy')
   expect(errors).toEqual([])
 })
-test('block filtering, data updates, management navigation and blank twin', async ({ page }) => {
+test('block filtering, data updates, management navigation and preloaded twin', async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('calypso-demo-session', 'admin'))
+  let twinRequests = 0
+  await page.route('http://115.66.232.13:25565/**', route => {
+    twinRequests++
+    return route.fulfill({ contentType: 'text/html', body: '<h1>Digital twin ready</h1><script>window.addEventListener("message", event => { if (typeof event.data !== "string") throw new Error("Unity requires a string argument"); document.querySelector("h1").textContent = JSON.stringify(JSON.parse(event.data)) })</script>' })
+  })
   await page.goto('/')
+  await expect.poll(() => twinRequests).toBe(1)
+  await expect(page.locator('#twin-panel')).toBeHidden()
   await page.getByRole('combobox', { name: 'Filter by location' }).selectOption('block-a')
   await expect(page.locator('.kpi').first()).toContainText('1,240')
   await page.evaluate(async () => {
@@ -33,11 +41,25 @@ test('block filtering, data updates, management navigation and blank twin', asyn
   })
   await expect(page.locator('.kpi').first()).toContainText('1,500')
   await page.getByRole('tab', { name: /Digital Twin/ }).click()
-  await expect(page.locator('#twin-panel')).toBeEmpty()
+  await expect(page.locator('#twin-panel')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Send Command', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Open in new tab' })).toHaveAttribute('href', 'http://115.66.232.13:25565/')
+  await expect(page.getByRole('link', { name: 'Open in new tab' })).toHaveAttribute('target', '_blank')
+  await page.getByRole('button', { name: 'Fullscreen digital twin' }).click()
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.className)).toBe('twin-viewer')
+  await page.evaluate(() => document.exitFullscreen())
+  await page.getByRole('tab', { name: 'My dashboard' }).click()
+  await page.getByRole('tab', { name: 'Digital Twin', exact: true }).click()
+  expect(twinRequests).toBe(1)
   await page.getByRole('link', { name: 'Security and CCTV', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Security and CCTV')
   await page.getByRole('combobox', { name: 'Filter by location' }).selectOption('block-b')
   await expect(page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Security equipment', exact: true }) })).toContainText('Offline')
+  const requestsBeforeReturn = twinRequests
+  await page.getByRole('link', { name: 'Dashboard', exact: true }).click()
+  await page.getByRole('tab', { name: 'Digital Twin', exact: true }).click()
+  await expect(page.locator('#twin-panel')).toBeVisible()
+  expect(twinRequests).toBe(requestsBeforeReturn)
 })
 test('fixed management widgets can be favorited, found first, added and unfavorited', async ({ page }) => {
   await page.goto('/')

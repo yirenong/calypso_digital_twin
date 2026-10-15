@@ -16,7 +16,7 @@ export function calculateKpi(widget, blocks, trends) {
   }
   if (widget.metric === 'energy-peak') {
     const history = trends.periods.hourly
-    // Coincident campus maximum, not the sum of each block's separate peak.
+    // Coincident building maximum, not the sum of each block's separate peak.
     return Math.max(0, ...history.labels.map((_, index) => blocks.reduce((sum, b) => sum + (history.energy[b.id]?.[index] || 0), 0)))
   }
   if (widget.metric === 'energy-average') {

@@ -55,3 +55,6 @@ html { scrollbar-gutter: stable; }
   .dashboard-grid.layout-editing { background-size: 100% 32px; }
   .dashboard-grid .edit-toolbar { margin: -4px -4px 14px; }
 }
+
+/* Give the digital twin the full workspace width on wide monitors. */
+main.twin-wide-page { max-width: none; padding-left: 16px; padding-right: 16px; }

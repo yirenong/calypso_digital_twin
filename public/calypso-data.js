@@ -11,6 +11,37 @@ export const locations = [
   { id: 'level-5', name: 'Level 5', modelNode: 'Level_5' },
   { id: 'landscape', name: 'Landscape', modelNode: 'Landscape' },
 ]
+// Unity bridge configuration. Names must match the WebGL application's objects.
+export const digitalTwinConfig = {
+  // Level 1's supplied "-20.958." is interpreted as -20.958.
+  teleports: {
+    'Level 1': { position: { x: -20.958, y: 2.561, z: .255 }, rotation: { x: 0, y: 180, z: 0 } },
+    'Level 2': { position: { x: -18.465, y: 7.48, z: -2.28 }, rotation: { x: 0, y: 180, z: 0 } },
+    'Level 3': { position: { x: -18.465, y: 13.27, z: -2.28 }, rotation: { x: 0, y: 180, z: 0 } },
+    'Level 4': { position: { x: -21.24, y: 18.4, z: -22.66 }, rotation: { x: 0, y: 0, z: 0 } },
+    'Level 5': { position: { x: 17.18, y: 27.78, z: 8.86 }, rotation: { x: 0, y: 221.449, z: 0 } },
+  },
+  pointsOfInterest: ['HVAC Pump Room', 'Gantry', 'Cooling Tower System - Level 4', 'Water Supply System Room', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
+  itemFocus: {
+    'hvac-pump-level_1': 'HVAC Pump Room',
+    'cooling-tower-level_4': 'Cooling Tower System - Level 4',
+    'water-supply-level_1': 'Water Supply System Room',
+  },
+  alertTargets: [
+    { name: 'HVAC Pump System - Pump 1 (Level 1)', locationId: 'block-a', position: { x: -2.861, y: 2.227, z: 5.112 } },
+    { name: 'HVAC Pump System - Pump 2 (Level 1)', locationId: 'block-a', position: { x: -12.127, y: 2.153, z: 6.129 } },
+    { name: 'Chiller Plant System (Level 1)', locationId: 'block-a', position: { x: -6.49, y: 3.448, z: 5.47 } },
+    { name: 'Air Duct System (Level 1)', locationId: 'block-a', position: { x: -1.55, y: 1.081, z: -7.186 } },
+    { name: 'Air Duct System (Level 2)', locationId: 'block-b', position: { x: -3.176, y: 6.472, z: -8.319 } },
+    { name: 'Air Duct System (Level 3)', locationId: 'block-c', position: { x: -4.817, y: 11.66, z: -11.34 } },
+    { name: 'Air Duct System - 001 (Level 3)', locationId: 'block-c', position: { x: -10.299, y: 12.682, z: 4.84 } },
+    { name: 'Air Duct System - 002 (Level 3)', locationId: 'block-c', position: { x: -15.437, y: 12.682, z: 4.84 } },
+    { name: 'Cooling Tower System (Level 4)', locationId: 'level-4', position: { x: .97, y: 16.608, z: -3.873 } },
+    { name: 'Waste Supply System (Level 1)', locationId: 'block-a', position: { x: 9.786, y: 1.198, z: -6.765 } },
+    { name: 'Waste Supply System (Level 2)', locationId: 'block-b', position: { x: -7.293, y: 6.246, z: 6.496 } },
+    { name: 'Waste Supply System (Level 3)', locationId: 'block-c', position: { x: -5.3, y: 11.528, z: 6.353 } },
+  ],
+}
 export const systems = [
   { id: 'air-duct', name: 'Air Duct System', category: 'energy', locationIds: ['block-a','block-b','block-c'] },
   { id: 'chiller-plant', name: 'Chiller Plant System', category: 'energy', locationIds: ['block-a'] },
@@ -115,7 +146,7 @@ export function createDemoSensors(blocks, periods, systems) {
 // Standalone ES module: also import this file directly into your 3D application.
 // These are illustrative readings, not live building telemetry.
 export const projectData = {
-  site: { id: 'calypso', name: 'Calypso Campus', dataMode: 'Demo data' },
+  site: { id: 'calypso', name: 'Calypso Building', dataMode: 'Demo data' },
   locations, systems,
   // Legacy block IDs and APIs are retained for saved thresholds and integrations.
   blocks: [
@@ -133,7 +164,7 @@ export const projectData = {
     { id: 'cam-b-01', blockId: 'block-b', modelNode: 'Camera_B_01', name: 'Car park camera', type: 'CCTV', status: 'Normal' },
     { id: 'cam-c-01', blockId: 'block-c', modelNode: 'Camera_C_01', name: 'Visitor lobby camera', type: 'CCTV', status: 'Normal' },
   ],
-  // A small preview inventory; the campus KPI includes cameras outside these demo views.
+  // A small preview inventory; the building KPI includes cameras outside these demo views.
   cameras: [
     { id: 'cam-a-01', blockId: 'block-a', name: 'Main lobby', location: 'Level 1 · Ground floor', source: '/media/cctv-lobby.webm', status: 'Online', demo: true },
     { id: 'cam-b-01', blockId: 'block-b', name: 'Car park', location: 'Level 2 · Outdoor parking', source: '/media/cctv-parking.webm', status: 'Online', demo: true },

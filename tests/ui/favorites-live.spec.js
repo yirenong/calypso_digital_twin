@@ -1,0 +1,21 @@
+import {test,expect} from '@playwright/test'
+
+test('favorites update the retained dashboard immediately after navigation',async({page})=>{
+  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+  await page.route('http://115.66.232.13:25565/**',r=>r.fulfill({body:'Unity'}))
+  await page.goto('/dashboard')
+  await page.getByRole('link',{name:'Energy Management',exact:true}).click()
+  await page.getByRole('button',{name:'Favorite Energy by location',exact:true}).click()
+  await page.getByRole('link',{name:'Dashboard',exact:true}).click()
+  await expect(page.locator('.dashboard-discovery')).toContainText('1 favorite widgets')
+  await page.getByRole('button',{name:'Find widgets',exact:true}).click()
+  await page.getByRole('button',{name:'Favorites (1)',exact:true}).click()
+  await expect(page.locator('.library-item')).toHaveCount(1)
+  await expect(page.locator('.library-item')).toContainText('Energy by location')
+  await page.getByRole('button',{name:'Close widget library'}).click()
+  await page.getByRole('button',{name:'Cancel',exact:true}).click()
+  await page.getByRole('link',{name:'Energy Management',exact:true}).click()
+  await page.getByRole('button',{name:'Unfavorite Energy by location',exact:true}).click()
+  await page.getByRole('link',{name:'Dashboard',exact:true}).click()
+  await expect(page.locator('.dashboard-discovery')).toContainText('0 favorite widgets')
+})

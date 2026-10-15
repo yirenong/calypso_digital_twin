@@ -47,7 +47,7 @@ Direct links, refresh, and browser Back/Forward work locally. The root URL redir
 
 Security and CCTV includes a full-width **CCTV monitor**: local animated lobby and car-park clips, camera selection, play/pause, fullscreen, and a sample offline camera. The viewer respects the block filter and can be starred and added to the dashboard. All footage is visibly labeled as simulated demo footage.
 
-The bundled clips are `public/media/cctv-lobby.webm` and `public/media/cctv-parking.webm`; no internet media service is required. `scripts/generate-cctv-demo.mjs` generates these silent eight-second illustrations with Playwright/Chrome (`node scripts/generate-cctv-demo.mjs`). Camera definitions are in `projectData.cameras` inside `public/calypso-data.js`. Change `source` to your own browser-playable WebM/MP4 URL to supply different demo footage. Production camera protocols such as RTSP need a browser-compatible streaming bridge. The four preview entries are a small sample inventory; campus KPI counts include additional cameras.
+The bundled clips are `public/media/cctv-lobby.webm` and `public/media/cctv-parking.webm`; no internet media service is required. `scripts/generate-cctv-demo.mjs` generates these silent eight-second illustrations with Playwright/Chrome (`node scripts/generate-cctv-demo.mjs`). Camera definitions are in `projectData.cameras` inside `public/calypso-data.js`. Change `source` to your own browser-playable WebM/MP4 URL to supply different demo footage. Production camera protocols such as RTSP need a browser-compatible streaming bridge. The four preview entries are a small sample inventory; building KPI counts include additional cameras.
 
 ## System reports
 
@@ -55,7 +55,7 @@ Click **Generate report** on BMS, Energy Management, Water Management, or Securi
 
 - **Energy / Water:** executive metrics, consumption profile chart, block shares and rankings, peak intervals, previous same-count interval comparison when earlier data exists, hourly operating/overnight groupings, interval tables, findings and recommended follow-up.
 - **BMS:** temperature and occupancy snapshots, building-level readings, sample equipment status exceptions and inventory, with the limits of the available data stated explicitly.
-- **Security/CCTV:** current online/offline counts, snapshot availability, block-level breakdown, sample camera-view status and CCTV equipment inventory. Preview camera counts are a subset of campus camera totals; no historical uptime or incidents are inferred from demo clips.
+- **Security/CCTV:** current online/offline counts, snapshot availability, block-level breakdown, sample camera-view status and CCTV equipment inventory. Preview camera counts are a subset of building camera totals; no historical uptime or incidents are inferred from demo clips.
 
 Use **Download PDF** for a direct, paginated A4 report with the consumption chart, tables and page numbers, or **Download Excel** for a formatted `.xlsx` workbook with separate overview, KPI, findings, actions, details, methodology and notes worksheets. Numeric values remain numeric, and table sheets have filters and frozen headers. Both exports run locally and load their export libraries only when needed.
 

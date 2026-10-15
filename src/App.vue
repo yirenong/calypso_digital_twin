@@ -3,9 +3,14 @@ import { ref, computed, provide, watch, onBeforeUnmount, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { signOut } from './auth'
 import NotificationCenter from './components/NotificationCenter.vue'
+import DashboardPage from './pages/DashboardPage.vue'
 import { navigation } from './navigation'
 const route = useRoute()
 const router = useRouter()
+const isDashboard = computed(() => ['/dashboard', '/dashboard/digital-twin'].includes(route.path))
+const dashboardLoaded = ref(false)
+watch(isDashboard, active => { if (active) dashboardLoaded.value = true }, { immediate: true })
+watch(() => route.meta.public, isPublic => { if (isPublic) dashboardLoaded.value = false })
 const logoutDialog = ref(null)
 function requestLogout() { logoutDialog.value.showModal() }
 function cancelLogout() { logoutDialog.value.close() }
@@ -28,12 +33,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keydown))
       <div class="brand"><img src="/brand.png" alt="Calypso"></div>
       <p class="nav-label">WORKSPACE</p>
       <nav aria-label="Main navigation"><RouterLink v-for="item in navigation" :key="item.id" :class="{ active: route.meta.section === item.id }" :aria-current="route.meta.section === item.id ? 'page' : undefined" :to="item.path"><i aria-hidden="true" :class="`fa-solid fa-${item.icon}`"></i><span>{{ item.label }}</span><i aria-hidden="true" v-if="route.meta.section === item.id" class="fa-solid fa-angle-right nav-arrow"></i></RouterLink></nav>
-      <div class="sidebar-bottom"><div class="site-icon"><i aria-hidden="true" class="fa-solid fa-building"></i></div><div><strong>Calypso Campus</strong><small>{{ projectData.locations.length }} locations</small></div><span class="status-dot"></span></div>
+      <div class="sidebar-bottom"><div class="site-icon"><i aria-hidden="true" class="fa-solid fa-building"></i></div><div><strong>Calypso Building</strong><small>{{ projectData.locations.length }} locations</small></div><span class="status-dot"></span></div>
     </aside>
     <div class="workspace">
       <header class="topbar"><button class="icon-button mobile-menu" aria-label="Toggle navigation" @click="menu = !menu"><i aria-hidden="true" class="fa-solid fa-bars"></i></button><div class="breadcrumb">Calypso <span>/</span> <strong>{{ title }}</strong></div><div class="header-tools"><span class="demo"><span class="status-dot"></span> Demo data</span><button class="icon-button" :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'" @click="dark = !dark"><i aria-hidden="true" :class="`fa-solid fa-${dark ? 'sun' : 'moon'}`"></i></button><NotificationCenter/><span class="avatar" title="Local workspace">CL</span></div></header>
       <button class="icon-button logout-button" aria-label="Sign out" title="Sign out" @click="requestLogout"><i aria-hidden="true" class="fa-solid fa-arrow-right-from-bracket"></i></button>
-      <RouterView/>
+      <div v-if="dashboardLoaded" v-show="isDashboard"><DashboardPage /></div>
+      <RouterView v-if="!isDashboard"/>
     </div>
     <dialog ref="logoutDialog" class="logout-dialog" aria-labelledby="logout-title" aria-describedby="logout-description">
       <div class="logout-symbol"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></div>
