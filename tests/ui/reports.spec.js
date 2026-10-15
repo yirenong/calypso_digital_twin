@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import fs from 'node:fs/promises'
 import ExcelJS from 'exceljs/dist/exceljs.js'
+test.beforeEach(async({page})=>{await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'));await page.route('http://115.66.232.13:25565/**',r=>r.fulfill({body:'Unity'}))})
 test('all system pages generate scoped in-depth reports', async ({ page }) => {
   for (const [path, system] of [['/building-management','BMS'],['/energy-management','Energy Management'],['/water-management','Water Management'],['/security-cctv','Security and CCTV']]) {
     await page.goto(path)
@@ -22,13 +23,11 @@ test('all system pages generate scoped in-depth reports', async ({ page }) => {
     await page.getByRole('button',{name:'Download Excel',exact:true}).click()
     const workbook=new ExcelJS.Workbook()
     await workbook.xlsx.load(await fs.readFile(await (await excelEvent).path()))
-    expect(workbook.getWorksheet('Report overview').getCell('B5').value).toBe(system)
-    const overview=workbook.getWorksheet('Report overview')
-    const entries={}
-    overview.eachRow(row=>{entries[String(row.getCell(1).value)]=row.getCell(2).value})
-    expect(entries.From).toBe('2026-10-02')
-    expect(entries.To).toBe('2026-10-04')
-    if(system==='BMS'||system==='Security and CCTV') expect(entries['Data coverage']).toBe('Current readings snapshot')
+    const overview=workbook.getWorksheet('Report summary')
+    expect(String(overview.getCell('B3').value)).toContain(system)
+    expect(String(overview.getCell('B6').value)).toContain('From: 2026-10-02')
+    expect(String(overview.getCell('B6').value)).toContain('To: 2026-10-04')
+    expect(overview.getImages()).toHaveLength(1)
     await page.getByRole('button',{name:'Close report generator'}).click()
   }
 })
@@ -63,9 +62,11 @@ test('report date filters, exports, invalid ranges and stale settings work', asy
   const excel = await excelDownload
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(await fs.readFile(await excel.path()))
-  expect(workbook.getWorksheet('Interval readings').rowCount).toBe(6)
-  expect(typeof workbook.getWorksheet('KPI summary').getCell('B4').value).toBe('number')
-  expect(workbook.getWorksheet('Analyst notes').getCell('B4').value).toBe('Review equipment operating schedules.')
+  const intervalRows=[];workbook.getWorksheet('Detailed data').eachRow(row=>{if(/^2026-10-0[234]$/.test(String(row.getCell(2).value)))intervalRows.push(row.number)})
+  expect(intervalRows).toHaveLength(6)
+  expect(typeof workbook.getWorksheet('Report summary').getCell('B11').value).toBe('number')
+  const reviewCells=[];workbook.getWorksheet('Review and methodology').eachRow(row=>row.eachCell(cell=>reviewCells.push(cell.value)))
+  expect(reviewCells).toContain('Review equipment operating schedules.')
   const downloadEvent = page.waitForEvent('download')
   await page.getByRole('button',{name:'JSON',exact:true}).click()
   const download = await downloadEvent

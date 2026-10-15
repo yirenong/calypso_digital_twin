@@ -6,6 +6,7 @@ import TwinOverlayPanel from './TwinOverlayPanel.vue'
 import WidgetContent from './WidgetContent.vue'
 import { widgets } from '../dashboard'
 import { createTwinPreset, twinScreens } from '../twin-presets'
+import { twinAssets, unityAssetName } from '../twin-assets'
 
 
 let storedScreen
@@ -72,6 +73,7 @@ const sizeSettingsOpen = ref(false)
 const layout = computed(() => editing.value ? draftLayout.value : savedLayout.value)
 watch(activeScreen,()=>{ savedLayout.value=loadScreenLayout();draftLayout.value=cloneLayout(savedLayout.value);itemId.value='all';libraryOpen.value=false;sizeSettingsOpen.value=false;layoutNotice.value='';try{localStorage.setItem('calypso.twin.active-screen',activeScreen.value)}catch{/* Session selection still works. */} })
 const positionReaders = new Map()
+const viewerViewport = ref({width:1440,height:850,fullscreen:false})
 function capturePosition(id){const value=positionReaders.get(id)?.();if(value&&editing.value)Object.assign(draftLayout.value[id],value)}
 function resizePanel(id,width,height){if(editing.value){capturePosition(id);Object.assign(draftLayout.value[id],{width:Math.max(160,Math.min(1000,draftLayout.value[id].availableWidth || 1000,Math.round(width))),height:Math.max(140,Math.round(height))})}}
 function setGroupSize(key,value){
@@ -87,7 +89,7 @@ function saveLayout() {
   try { localStorage.setItem(layoutKey.value, JSON.stringify(draftLayout.value)); savedLayout.value = cloneLayout(draftLayout.value); editing.value = false; libraryOpen.value = false; sizeSettingsOpen.value = false; layoutNotice.value = 'Digital twin layout saved in this browser.' }
   catch { layoutNotice.value = 'Could not save the layout. Your changes are still open.' }
 }
-provide('twin-panel-layout',{editing,layout,resizePanel,capturePosition,registerPosition:(id,reader)=>positionReaders.set(id,reader),unregisterPosition:id=>positionReaders.delete(id),update:(id,position)=>{if(editing.value)Object.assign(draftLayout.value[id],position)},remove:id=>{if(editing.value)draftLayout.value[id].enabled=false}})
+provide('twin-panel-layout',{editing,layout,viewport:viewerViewport,resizePanel,capturePosition,registerPosition:(id,reader)=>positionReaders.set(id,reader),unregisterPosition:id=>positionReaders.delete(id),update:(id,position)=>{if(editing.value)Object.assign(draftLayout.value[id],position)},remove:id=>{if(editing.value)draftLayout.value[id].enabled=false}})
 
 const { projectData, subscribeData, digitalTwinConfig } = inject('dataApi')
 const twinViewer = ref(null)
@@ -100,11 +102,29 @@ onBeforeUnmount(subscribeData(next => { data.value = structuredClone(next) }))
 
 const locationId = inject('workspace-block', ref('all'))
 const itemId = ref('all')
-watch(locationId, () => { itemId.value = 'all'; alertName.value = ''; focusLocation() })
+const unitySelection = ref(null)
+let syncingFromTwin = false
+watch(locationId, () => { itemId.value = 'all'; unitySelection.value=null; alertName.value = ''; if(!syncingFromTwin)focusLocation() })
 const selectedLocation = computed(() => data.value.locations.find(location => location.id === locationId.value))
 const locationBlocks = computed(() => data.value.blocks.filter(block => locationId.value === 'all' || block.id === locationId.value))
 const locationSensors = computed(() => data.value.sensors.filter(sensor => locationId.value === 'all' || sensor.locationId === locationId.value))
-const selectedItem = computed(() => data.value.assets.find(item => item.id === itemId.value) || data.value.sensors.find(item => item.id === itemId.value))
+const selectedItem = computed(() => {
+  const item=data.value.assets.find(item => item.id === itemId.value) || data.value.sensors.find(item => item.id === itemId.value)
+  return item && unitySelection.value?.id === item.id ? {...item,name:unitySelection.value.name} : item
+})
+async function selectUnityAsset(name) {
+  const asset=data.value.assets.find(asset=>asset.id === twinAssets[name])
+  if(!asset){commandNotice.value='No dashboard mapping for '+name;return}
+  syncingFromTwin=true
+  try {
+    locationId.value=asset.blockId
+    await nextTick()
+    itemId.value=asset.id
+    await nextTick()
+    unitySelection.value={id:asset.id,name}
+    commandNotice.value=name+' selected. Readings are from the associated system; individual asset measurements are not configured.'
+  } finally {syncingFromTwin=false}
+}
 const sensors = computed(() => !selectedItem.value ? locationSensors.value : locationSensors.value.filter(sensor => selectedItem.value.system ? sensor.id === selectedItem.value.id : sensor.systemId === selectedItem.value.systemId && sensor.locationId === selectedItem.value.blockId))
 const visibleChartSeries = computed(() => {
   if (editing.value || !selectedItem.value) return ['energy','water']
@@ -160,10 +180,14 @@ async function focusEquipment(system, location) {
   const asset = data.value.assets.find(asset => asset.systemId === system.id && asset.blockId === location.id)
   itemId.value = asset?.id || 'all'
   await nextTick()
+  const assetName = unityAssetName(asset?.id)
+  if(assetName){sendTwinCommand('FocusOnAsset',assetName);return}
   const target = digitalTwinConfig.itemFocus[asset?.id] || location.name
   if (digitalTwinConfig.pointsOfInterest.includes(target) && (!changesLocation || target !== location.name)) sendTwinCommand('PointOfInterest', target)
 }
 watch(itemId, () => {
+  unitySelection.value=null
+  if(syncingFromTwin)return
   const sensor = data.value.sensors.find(sensor => sensor.id === itemId.value)
   if (sensor) sendSensor(sensor)
   else if (selectedItem.value) {
@@ -183,7 +207,7 @@ function showAlert() {
 
 <template>
   <div class="twin-dashboard">
-    <DigitalTwinViewer ref="twinViewer" :accent="screenDetails.color" :show-navigation="layout.navigation.enabled">
+    <DigitalTwinViewer @asset-selected="selectUnityAsset" @viewport-change="viewerViewport=$event" ref="twinViewer" :accent="screenDetails.color" :show-navigation="layout.navigation.enabled">
       <template #screens><div class="twin-screen-bar"><div class="screen-brand"><i aria-hidden="true" class="fa-solid fa-cubes"></i><div><strong>CALYPSO</strong><span>{{ screenDetails.description }}</span></div></div><div class="twin-screen-tabs" role="tablist" aria-label="Digital twin screens"><button v-for="screen in twinScreens" :key="screen.id" role="tab" :aria-selected="activeScreen===screen.id" :disabled="editing" :title="editing?'Save or cancel customization before switching screens':screen.description" @click="activeScreen=screen.id"><i aria-hidden="true" :class="`fa-solid fa-${screen.icon}`"></i>{{ screen.label }}</button></div><span class="screen-mode"><span></span> Demo data</span></div></template>
       <template #actions>
         <template v-if="editing"><button @click="libraryOpen = !libraryOpen; sizeSettingsOpen = false">Add panels</button><button @click="sizeSettingsOpen = !sizeSettingsOpen; libraryOpen = false">Dock sizes</button><button @click="draftLayout = defaults()">Restore default preset</button><button @click="cancelLayout">Cancel</button><button class="primary" @click="saveLayout">Save twin dashboard</button></template>
@@ -214,7 +238,7 @@ function showAlert() {
       </TwinOverlayPanel>
       <TwinOverlayPanel id="health" title="Sensor health" :x="0.5" :y="0.1"><div class="twin-health"><h3>{{ selectedLocation?.name || 'All locations' }}</h3><div><span>Connected</span><strong>{{ sensors.filter(sensor => sensor.online).length }}</strong></div><div><span>Offline</span><strong>{{ sensors.filter(sensor => !sensor.online).length }}</strong></div><div><span>Reported faults</span><strong>{{ sensors.filter(sensor => sensor.faultCode).length }}</strong></div></div></TwinOverlayPanel>
       <TwinOverlayPanel id="items" title="Item overview" :x="0.5" :y="0.3">
-        <button v-if="itemPointOfInterest" @click="sendTwinCommand('PointOfInterest', itemPointOfInterest)">Focus selected item</button>
+        <button v-if="unityAssetName(itemId) || itemPointOfInterest" @click="unityAssetName(itemId) ? sendTwinCommand('FocusOnAsset', unitySelection?.name || unityAssetName(itemId)) : sendTwinCommand('PointOfInterest', itemPointOfInterest)">Focus selected item</button>
         <button v-if="selectedItem && sensors.length" @click="sensors.forEach(sendSensor)">Send selected sensor data</button>
         <div class="twin-selection"><label>Item type<select v-model="itemType" aria-label="Item overview type"><option value="all">All item types</option><option v-for="type in itemTypes" :key="type" :value="type">{{ type }}</option></select></label></div>
         <div class="twin-selection"><label>Selected item<select v-model="itemId" aria-label="Digital twin item"><option value="all">All items in this location</option><optgroup label="Equipment &amp; assets"><option v-for="item in visibleItems" :key="item.id" :value="item.id">{{ item.name }}</option></optgroup><optgroup label="Individual sensors"><option v-for="sensor in locationSensors" :key="sensor.id" :value="sensor.id">{{ sensor.name }}</option></optgroup></select></label></div><p class="twin-muted">{{ selectedItem?.name || selectedLocation?.name || 'All locations' }} · {{ selectedItem ? sensors.length + ' associated sensors' : visibleItems.length + ' items' }}</p>

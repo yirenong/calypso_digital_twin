@@ -65,34 +65,7 @@ export async function createReportPdf(report) {
 }
 
 export async function createReportExcel(report) {
-  const module = await import('exceljs')
-  const ExcelJS = module.default || module
-  const workbook = new ExcelJS.Workbook()
-  workbook.creator='Calypso';workbook.created=new Date(report.generatedAt);workbook.title=report.title
-  const navy='FF1D394D', pale='FFF3F7FA', ink='FF304053'
-  const usedNames = new Set()
-  function sheet(title,columns,rows) {
-    let name=title.replace(/[\[\]:*?/\\]/g,' ').slice(0,31),suffix=1
-    while(usedNames.has(name)){name=title.slice(0,27)+' '+suffix++}
-    usedNames.add(name)
-    const ws=workbook.addWorksheet(name,{views:[{state:'frozen',ySplit:3}],pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0},headerFooter:{oddFooter:'&LCalypso&RPage &P of &N'}})
-    ws.addRow([title]);ws.mergeCells(1,1,1,columns.length);ws.getRow(1).font={name:'Calibri',size:16,bold:true,color:{argb:navy}};ws.getRow(1).height=28
-    ws.addRow([]);ws.addRow(columns)
-    const header=ws.getRow(3);header.height=35
-    header.eachCell(cell=>{cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:navy}};cell.font={name:'Calibri',bold:true,color:{argb:'FFFFFFFF'},size:11};cell.alignment={vertical:'middle',wrapText:true}})
-    for(const values of rows){const row=ws.addRow(values.map(value=>value===null?'Unavailable':value));row.height=32;row.eachCell(cell=>{cell.font={name:'Calibri',size:11,color:{argb:ink}};cell.alignment={vertical:'top',wrapText:true};if(typeof cell.value==='number')cell.numFmt='#,##0.00';if(row.number%2===0)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:pale}}})}
-    columns.forEach((label,i)=>{const longest=Math.max(String(label).length,...rows.map(row=>String(row[i]??'').length));ws.getColumn(i+1).width=Math.min(55,Math.max(18,longest*.8+3))})
-    ws.autoFilter={from:{row:3,column:1},to:{row:Math.max(3,ws.rowCount),column:columns.length}}
-    // Narrative cells need enough height to retain all text when printed/opened.
-    ws.eachRow((row,index)=>{if(index<=3)return;let lines=1;row.eachCell((cell,col)=>{lines=Math.max(lines,...String(cell.value??'').split('\n').map(line=>Math.ceil(line.length/Math.max(1,ws.getColumn(col).width-3))))});row.height=Math.min(409,Math.max(30,lines*15+10))})
-    return ws
-  }
-  sheet('Report overview',['Field','Value'],[['Report',report.title],['System',reportSystems[report.system]],['Site',report.site],['Scope',report.scope],['Reporting range',report.window],['Generated',report.generatedLabel],['Report ID',report.id],['Data mode',report.dataMode],...(report.from ? [['Interval',report.period],['From',report.from],['To',report.to],['Data coverage',report.coverage || 'Historical consumption within selected range']] : []),['Executive summary',report.summary]])
-  sheet('KPI summary',['Metric','Value','Unit','Context'],report.metrics.map(m=>[m.label,m.value,m.unit,m.detail]))
-  sheet('Findings',['Level','Finding','Description'],report.findings.map(f=>[f.level,f.title,f.text]))
-  sheet('Follow-up actions',['Priority order','Recommended action'],report.actions.map((action,i)=>[i+1,action]))
-  for(const section of report.tables)sheet(section.title,section.columns,section.rows)
-  sheet('Methodology',['Item','Data coverage and assumptions'],report.methodology.map((note,i)=>[i+1,note]))
-  if(report.notes){const paragraphs=report.notes.split('\n').flatMap(line=>line.match(/.{1,180}/g)||['']);sheet('Analyst notes',['Line','Notes'],paragraphs.map((line,i)=>[i+1,line]))}
+  const [module, { buildReportWorkbook }] = await Promise.all([import('exceljs'), import('./report-workbook.js')])
+  const workbook = await buildReportWorkbook(report, module.default || module)
   return workbook.xlsx.writeBuffer()
 }

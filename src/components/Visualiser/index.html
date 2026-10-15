@@ -93,36 +93,33 @@
         var runtimePaused = false;
         function updateActivity() {
             if (!gameInstance) return;
-            var pause = !parentActive || document.hidden;
-            if (pause === runtimePaused) return;
-            var module = gameInstance.Module;
-            if (pause) module.pauseMainLoop();
-            else module.resumeMainLoop();
-            runtimePaused = pause;
+            var paused = !parentActive || document.hidden;
+            if (paused === runtimePaused) return;
+            if (paused) gameInstance.Module.pauseMainLoop();
+            else gameInstance.Module.resumeMainLoop();
+            runtimePaused = paused;
         }
         document.addEventListener('visibilitychange', updateActivity);
         function resizeRenderBuffer() {
-            var width = Math.max(1, canvas.clientWidth);
-            var height = Math.max(1, canvas.clientHeight);
-            var scale = Math.min(1, 1600 / width, 900 / height);
-            var nextWidth = Math.round(width * scale);
-            var nextHeight = Math.round(height * scale);
-            if (canvas.width !== nextWidth) canvas.width = nextWidth;
-            if (canvas.height !== nextHeight) canvas.height = nextHeight;
+            var width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
+            var scale=Math.min(1,1600/width,900/height);
+            var nextWidth=Math.round(width*scale),nextHeight=Math.round(height*scale);
+            if(canvas.width!==nextWidth)canvas.width=nextWidth;
+            if(canvas.height!==nextHeight)canvas.height=nextHeight;
         }
         new ResizeObserver(resizeRenderBuffer).observe(canvas);
         resizeRenderBuffer();
 
         var buildUrl = "Build";
 
-        var loaderUrl = buildUrl + "/Visualiser 2026 15_10_2026 1041.loader.js";
+        var loaderUrl = buildUrl + "/Visualiser 2026 15_10_2026 1721.loader.js";
 
         var config = {
             matchWebGLToCanvasSize: false,
             devicePixelRatio: 1,
-            dataUrl: buildUrl + "/Visualiser 2026 15_10_2026 1041.data.gz",
-            frameworkUrl: buildUrl + "/Visualiser 2026 15_10_2026 1041.framework.js.gz",
-            codeUrl: buildUrl + "/Visualiser 2026 15_10_2026 1041.wasm.gz",
+            dataUrl: buildUrl + "/Visualiser 2026 15_10_2026 1721.data.gz",
+            frameworkUrl: buildUrl + "/Visualiser 2026 15_10_2026 1721.framework.js.gz",
+            codeUrl: buildUrl + "/Visualiser 2026 15_10_2026 1721.wasm.gz",
 
 
 
@@ -141,9 +138,9 @@
         // ==========================================
 
 window.addEventListener("message", function(event) {
-            if (event.source !== window.parent || event.origin !== window.location.origin) return;
-            if (event.data?.channel === 'calypso-viewer-activity' && typeof event.data.active === 'boolean') {
-                parentActive = event.data.active;
+            if(event.source!==window.parent || event.origin!==window.location.origin)return;
+            if(event.data?.channel==='calypso-viewer-activity' && typeof event.data.active==='boolean'){
+                parentActive=event.data.active;
                 updateActivity();
                 return;
             }

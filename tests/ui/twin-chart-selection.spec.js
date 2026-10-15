@@ -3,7 +3,8 @@ import {test,expect} from '@playwright/test'
 test('level selection shows both charts and a sensor shows only its own chart',async({page})=>{
   await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
   await page.route('http://127.0.0.1:5175/visualiser/**',r=>r.fulfill({body:'Unity'}))
-  await page.goto('/dashboard/digital-twin')
+  await page.setViewportSize({width:1920,height:1080})
+ await page.goto('/dashboard/digital-twin')
   const level=page.getByRole('combobox',{name:'Digital twin location'})
   await level.selectOption('block-a')
   for(const series of ['energy','water']) await expect(page.locator(`[data-panel="${series}"]`)).toBeVisible()

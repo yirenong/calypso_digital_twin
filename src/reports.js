@@ -1,4 +1,5 @@
 import { filterHistory, validateRange } from './chart-range.js'
+import { reportIntervals, shiftInterval } from './report-intervals.js'
 export const reportSystems = { building: 'BMS', energy: 'Energy Management', water: 'Water Management', security: 'Security and CCTV' }
 export const formatReportNumber = value => new Intl.NumberFormat('en-SG', { maximumFractionDigits: 2 }).format(value)
 const sum = values => values.reduce((a, b) => a + b, 0)
@@ -61,7 +62,15 @@ export function generateReport(data, options, now = new Date()) {
     }
     report.actions = system === 'energy' ? ['Review the largest-consuming location against its size, occupancy and operating schedule before judging performance.', 'Review equipment schedules around the peak interval and compare against occupied hours.', 'Connect tariffs, floor areas and actual operating calendars to enable cost and energy-intensity analysis.'] : ['Validate meter readings and operating schedules for the largest-consuming location.', 'Review overnight use against expected cleaning, irrigation and other legitimate demand.', 'Connect meter alerts and maintenance records before classifying unusual consumption as leakage.']
     report.tables.push({ title: 'Location performance', columns: ['Location', `Consumption (${unit})`, 'Share (%)', `Average / interval (${unit})`, `Peak interval (${unit})`], rows: performance.map(b => [b.name, b.total, percent(b.total, total), b.average, b.peak]) })
-    if (report.includeDetails) report.tables.push({ title: 'Interval readings', columns: ['Interval', ...blocks.map(b => `${b.name} (${unit})`), `Total (${unit})`], rows: history.labels.map((label, i) => [label, ...blocks.map(b => series[b.id][i]), totals[i]]) })
+    const intervals=reportIntervals(period,from,to)
+    const sourceIndex=new Map(source.labels.map((label,index)=>[label,index]))
+    const intervalTotal=key=>{const index=sourceIndex.get(key);if(index===undefined)return null;const readings=blocks.map(block=>source[system][block.id]?.[index]);return readings.every(Number.isFinite)?sum(readings):null}
+    // Interval detail is mandatory in exported reports, even when inventory is omitted.
+    report.includeDetails=true
+    report.tables.push({ title: 'Interval readings', columns: ['Interval', ...blocks.map(b => `${b.name} (${unit})`), `Total (${unit})`], rows: intervals.map(({key,label})=>{const index=sourceIndex.get(key);return[label,...blocks.map(block=>index===undefined?null:source[system][block.id]?.[index]??null),intervalTotal(key)]}) })
+    report.tables.push({ title: 'Interval comparison', columns: ['Interval',`Consumption (${unit})`,`Previous interval (${unit})`,`Change (${unit})`,'Change (%)'], rows: intervals.map(({key,label})=>{const current=intervalTotal(key),previous=intervalTotal(shiftInterval(period,key,-1));const difference=current===null||previous===null?null:current-previous;return[label,current,previous,difference,difference===null||previous===0?null:difference/previous*100]}) })
+    report.coverage=`${history.labels.length} available of ${intervals.length} requested ${period} intervals. Missing readings are unavailable, not zero.`
+    report.methodology.push('Interval comparison uses the immediately preceding calendar interval, including an interval before From when available. Percentage change is unavailable when prior consumption is zero or either reading is missing.')
     report.methodology.push('Interval boundaries are inclusive. Weekly buckets start Monday; sample timestamps and buckets use UTC.', `Source history: ${source.rangeLabel}. ${history.note}.`, 'A comparison uses the immediately preceding available intervals with the same count. Missing comparison data is reported as unavailable.', 'Period consumption is historical; current KPI readings are independent. No tariffs, floor areas or verified incident history are supplied.')
   } else if (system === 'building') {
     const temperatures = blocks.map(b => b.temperatureC).filter(Number.isFinite)
@@ -99,6 +108,7 @@ export function generateReport(data, options, now = new Date()) {
     report.methodology.push('Pressure, tank levels, meter connectivity and active alerts are current demo snapshots. The selected date range filters consumption history only. Tank fill and pressure averages are unweighted; no tank capacities are supplied.')
   }
   if (report.includeInventory && assets.length) report.tables.push({ title: 'Equipment inventory', columns: ['Asset ID','Name','Block','System','Status','3D model node'], rows: assets.map(a => [a.id,a.name,blocks.find(b => b.id === a.blockId)?.name,a.systemName || a.type,a.status,a.modelNode]) })
+  if (['building','security'].includes(system) && report.from) report.tables.push({title:'Requested intervals',columns:['Interval','Historical data'],rows:reportIntervals(period,from,to).map(({label})=>[label,'Unavailable — historical readings are not connected; see current snapshot tables.'])})
   return report
 }
 

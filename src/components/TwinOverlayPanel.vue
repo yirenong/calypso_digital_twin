@@ -1,16 +1,27 @@
 <script setup>
 import { computed, inject, onMounted, onBeforeUnmount, ref } from 'vue'
 const props=defineProps({id:String,title:String,x:Number,y:Number,forceVisible:Boolean,scrollable:{type:Boolean,default:true}})
-const api=inject('twin-panel-layout'),panel=ref(null),collapsed=ref(false)
+const api=inject('twin-panel-layout'),panel=ref(null),manualCollapsed=ref(null)
 const editing=api.editing
 const position=computed(()=>api.layout.value[props.id])
-const width=computed(()=>position.value.width || (props.scrollable?320:520))
+const compact=computed(()=>api.viewport.value.width<1000)
+const collapsed=computed(()=>manualCollapsed.value ?? (!editing.value && compact.value && ['items','health','widget-occupancy'].includes(props.id)))
+const width=computed(()=>{
+ const available=api.viewport.value.width-24
+ const desired=position.value.width || (props.scrollable?320:520)
+ const limit=dock.value==='bottom'?Math.max(300,Math.min(520,available*(compact.value ? .72 : .42))):Math.max(220,Math.min(320,available*.24))
+ return Math.min(desired,limit,available)
+})
+const height=computed(()=>{
+ const desired=position.value.height || 360
+ return dock.value==='bottom' && !editing.value ? Math.min(desired,Math.max(240,api.viewport.value.height*.36)):desired
+})
 const ready=ref(false)
 onMounted(()=>{ready.value=true})
 const dock=computed(()=>position.value.dock || 'left')
 const dragPreview=ref(null)
 let drag,resize
-const placement=computed(()=>{if(dragPreview.value)return{position:'fixed',left:dragPreview.value.left+'px',top:dragPreview.value.top+'px',width:dragPreview.value.width+'px',zIndex:30};if(!position.value.edgePlaced)return{};const x=position.value.dock==='left'?0:position.value.dock==='right'?1:position.value.x;const y=position.value.dock==='bottom'?1:position.value.y;return{position:'absolute',left:(x*100)+'%',top:'max(0px, calc('+y*100+'% - '+y*(position.value.height || 360)+'px))',transform:'translateX(-'+x*100+'%)'}})
+const placement=computed(()=>{if(dragPreview.value)return{position:'fixed',left:dragPreview.value.left+'px',top:dragPreview.value.top+'px',width:dragPreview.value.width+'px',zIndex:30};if(!position.value.edgePlaced)return{};const x=position.value.dock==='left'?0:position.value.dock==='right'?1:position.value.x;const y=position.value.dock==='bottom'?1:position.value.y;return{position:'absolute',left:(x*100)+'%',top:'max(0px, calc('+y*100+'% - '+y*height.value+'px))',transform:'translateX(-'+x*100+'%)'}})
 onMounted(()=>api.registerPosition(props.id,()=>{if(!position.value.enabled || !panel.value)return null;const area=panel.value.parentElement,rect=panel.value.getBoundingClientRect(),bounds=area.getBoundingClientRect();return{availableWidth:area.clientWidth,left:(rect.left-bounds.left+area.scrollLeft)/area.clientWidth,top:(rect.top-bounds.top+area.scrollTop)/area.clientHeight}}))
 onBeforeUnmount(()=>api.unregisterPosition(props.id))
 const fixedAnchor=computed(()=>Number.isFinite(position.value.left)&&Number.isFinite(position.value.top))
@@ -37,8 +48,8 @@ function moveResize(e){if(resize&&resize.id===e.pointerId)api.resizePanel(props.
 function resizeKeyboard(e){const d={ArrowLeft:[-20,0],ArrowRight:[20,0],ArrowUp:[0,-20],ArrowDown:[0,20]}[e.key];if(!d)return;e.preventDefault();const r=panel.value.getBoundingClientRect();api.resizePanel(props.id,r.width+d[0],r.height+d[1])}
 </script>
 <template>
-<Teleport v-if="ready" :to="position.edgePlaced?'.twin-overlays':`#twin-dock-${dock}`"><section v-show="position.enabled || forceVisible" ref="panel" class="twin-overlay-panel" :class="{editing,collapsed,sized:position.height&&!collapsed,'chart-panel':!scrollable&&!collapsed}" :data-panel="id" :aria-label="title" :style="{'--panel-width':width+'px','--panel-height':(position.height || 360)+'px',order:position.order,...placement}">
-<header><button class="panel-grip" :aria-label="`Move ${title} panel`" title="Drag to move; arrow keys also work" @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="stopDrag" @pointercancel="stopDrag" @lostpointercapture="stopDrag" @keydown="keyboard"><i v-if="editing" aria-hidden="true" class="fa-solid fa-grip-vertical"></i><span>{{title.split(' · ')[0]}}</span></button><button class="panel-collapse" :aria-label="`${collapsed?'Expand':'Collapse'} ${title} panel`" @click="collapsed=!collapsed"><i aria-hidden="true" :class="collapsed?'fa-solid fa-plus':'fa-solid fa-minus'"></i></button></header>
+<Teleport v-if="ready" :to="position.edgePlaced?'.twin-overlays':`#twin-dock-${dock}`"><section v-show="position.enabled || forceVisible" ref="panel" class="twin-overlay-panel" :class="{editing,collapsed,sized:position.height&&!collapsed,'chart-panel':!scrollable&&!collapsed}" :data-panel="id" :aria-label="title" :style="{'--panel-width':width+'px','--panel-height':height+'px',order:position.order,...placement}">
+<header><button class="panel-grip" :aria-label="`Move ${title} panel`" title="Drag to move; arrow keys also work" @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="stopDrag" @pointercancel="stopDrag" @lostpointercapture="stopDrag" @keydown="keyboard"><i v-if="editing" aria-hidden="true" class="fa-solid fa-grip-vertical"></i><span>{{title.split(' · ')[0]}}</span></button><button class="panel-collapse" :aria-label="`${collapsed?'Expand':'Collapse'} ${title} panel`" @click="manualCollapsed=!collapsed"><i aria-hidden="true" :class="collapsed?'fa-solid fa-plus':'fa-solid fa-minus'"></i></button></header>
 <div v-show="!collapsed" class="panel-content"><slot/></div>
 <footer v-if="editing"><select :value="dock" :aria-label="`Dock ${title} panel`" @change="api.update(id,{dock:$event.target.value,edgePlaced:false})"><option value="left">Left</option><option value="bottom">Bottom</option><option value="right">Right</option></select><button :aria-label="`Remove ${title} panel`" @click="api.remove(id)"><i aria-hidden="true" class="fa-solid fa-xmark"></i> Remove</button><button v-if="!collapsed" class="resize-panel" :aria-label="`Resize ${title} panel`" title="Drag to resize; arrow keys also work" @pointerdown="startResize" @pointermove="moveResize" @pointerup="resize=null" @pointercancel="resize=null" @lostpointercapture="resize=null" @keydown="resizeKeyboard"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 20 20"><path d="M5 15L15 5M10 15H15V10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></footer>
 </section></Teleport>

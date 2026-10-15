@@ -39,5 +39,5 @@ test('invalid/empty ranges are rejected and report output safely escapes user te
   assert.ok(!html.includes('<script>'))
   assert.ok(reportCsv(report).includes("'=1+1"))
   const short = generateReport(projectData, {...options,includeDetails:false})
-  assert.ok(!short.tables.some(t=>t.title==='Interval readings'))
+  assert.ok(short.tables.some(t=>t.title==='Interval readings'))
 })

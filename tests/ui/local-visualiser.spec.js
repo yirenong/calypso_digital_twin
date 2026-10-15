@@ -4,8 +4,9 @@ test('local Unity build is served with compression headers and embedded locally'
  const html=await request.get('/visualiser/index.html')
  expect(html.status()).toBe(200)
  expect(await html.text()).toContain('createUnityInstance')
+ const buildName=(await html.text()).match(/Build";[\s\S]*?\/([^"/]+)\.loader\.js/)[1]
  for(const [suffix,mime] of [['wasm.gz','application/wasm'],['framework.js.gz','application/javascript'],['data.gz','application/octet-stream']]){
-  const asset=await request.head('/visualiser/Build/'+encodeURIComponent('Visualiser 2026 15_10_2026 1041.'+suffix))
+  const asset=await request.head('/visualiser/Build/'+encodeURIComponent(buildName+'.'+suffix))
   expect(asset.status()).toBe(200)
   expect(asset.headers()['content-encoding']).toBe('gzip')
   expect(asset.headers()['content-type']).toContain(mime)

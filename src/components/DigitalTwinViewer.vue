@@ -1,18 +1,33 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 defineProps({accent:{type:String,default:'#72d6e8'},showNavigation:{type:Boolean,default:false}})
-const url = `${import.meta.env.BASE_URL}visualiser/index.html`
+const emit = defineEmits(['viewport-change','asset-selected'])
+const url = import.meta.env.VITE_TWIN_URL || `${import.meta.env.BASE_URL}visualiser/index.html`
 const viewer = ref(null), stage = ref(null), unityFrame = ref(null), fullscreenError = ref('')
-let observer, visible = false
+let observer, sizeObserver, visible = false
+function measureViewer() {
+  if (stage.value) emit('viewport-change', {width:stage.value.clientWidth,height:stage.value.clientHeight,fullscreen:document.fullscreenElement===viewer.value})
+}
 function updateActivity() {
+  if (new URL(url,window.location.href).origin !== window.location.origin) return
   unityFrame.value?.contentWindow?.postMessage({channel:'calypso-viewer-activity',active:visible && !document.hidden}, window.location.origin)
 }
+function receiveMessage(event) {
+  if (event.source !== unityFrame.value?.contentWindow || event.origin !== new URL(url,window.location.href).origin) return
+  let command
+  try { command = typeof event.data === 'string' ? JSON.parse(event.data) : event.data } catch { return }
+  if (command?.type === 'FocusOnAsset' && typeof command.data === 'string') emit('asset-selected',command.data)
+}
 onMounted(() => {
+  window.addEventListener('message',receiveMessage)
   observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; updateActivity() })
   observer.observe(viewer.value)
+  sizeObserver = new ResizeObserver(measureViewer)
+  sizeObserver.observe(stage.value)
+  document.addEventListener('fullscreenchange', measureViewer)
   document.addEventListener('visibilitychange', updateActivity)
 })
-onBeforeUnmount(() => { observer?.disconnect(); document.removeEventListener('visibilitychange', updateActivity) })
+onBeforeUnmount(() => { window.removeEventListener('message',receiveMessage); observer?.disconnect(); sizeObserver?.disconnect(); document.removeEventListener('fullscreenchange', measureViewer); document.removeEventListener('visibilitychange', updateActivity) })
 function sendCommand(type, data) {
   if (!unityFrame.value?.contentWindow) return false
   const command = { type, data }
@@ -43,5 +58,6 @@ async function fullscreen() {
 .side-dock{flex-direction:column;overflow:auto;align-items:flex-start;width:max-content;max-width:100%;justify-self:start;pointer-events:auto}
 .right-dock{align-items:flex-end;justify-self:end}
 .side-dock :deep(.twin-overlay-panel){width:var(--panel-width);max-width:none}
-.bottom-dock{grid-column:1/-1;overflow:auto;align-items:flex-end;max-height:40vh}
+.bottom-dock{grid-column:1/-1;overflow:auto;align-items:flex-end;max-height:40vh;scroll-snap-type:x proximity}
+.bottom-dock :deep(.twin-overlay-panel){scroll-snap-align:start}
 </style>
