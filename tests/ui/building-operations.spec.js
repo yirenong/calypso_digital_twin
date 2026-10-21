@@ -28,7 +28,7 @@ test('operations cards can be favorited and restored in the dashboard', async ({
   await expect(page.locator('.operations-kpi:visible')).toContainText('1')
   await page.goto('/building-operations')
   await expect(page.getByLabel('Status for Inspect cooling tower')).toBeVisible()
-  await page.goto('/energy-management')
+  await page.goto('/adaptive-ac')
   await expect(page.getByRole('button', { name: 'Favorite Adaptive AC Control System', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Favorite AC simulation power trend', exact: true })).toBeVisible()
   await page.goto('/powerplus/tenant-energy')

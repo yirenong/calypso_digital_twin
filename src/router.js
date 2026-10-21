@@ -21,7 +21,7 @@ export const router = createRouter({
     { path: '/login', component: LoginPage, meta: { title: 'Sign in', public: true } },
     { path: '/', redirect: '/dashboard' },
     { path: '/powerplus/operational', redirect: '/building-operations' },
-    { path: '/powerplus/adaptive-ac', redirect: '/energy-management' },
+    { path: '/powerplus/adaptive-ac', redirect: '/adaptive-ac' },
     { path: '/powerplus/open-bms', redirect: '/building-management' },
     { path: '/dashboard/widgets', redirect: '/dashboard' },
     ...powerPlusNavigation.map(item => ({ path: item.path, component: PowerPlusPage, meta: { section: item.id, title: item.label, account: 'PowerPlus-Admin' } })),

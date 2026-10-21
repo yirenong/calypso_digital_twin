@@ -12,7 +12,7 @@ test('new PowerPlus pages generate scoped reports and PDF/Excel exports', async 
     ['/building-operations','Generate report','Total system efficiency'],
     ['/powerplus/managerial','Generate report','Annual electricity by location'],
     ['/powerplus/tenant-energy','Generate report','Tenant A interval readings'],
-    ['/energy-management','Generate AC report','Applied AC controls'],
+    ['/adaptive-ac','Generate report','Applied AC controls'],
     ['/building-management','Generate BMS assets report','Point list'],
     ['/dashboard','Generate report','Total system efficiency'],
     ['/dashboard/digital-twin','Generate report','Total system efficiency'],

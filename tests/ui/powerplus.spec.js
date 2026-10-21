@@ -27,7 +27,7 @@ test('PowerPlus requirements pages save workflows and restore them across reload
   await expect(page.getByRole('heading', { name: 'Add participating tenant', exact: true })).toHaveCount(0)
   await expect(page.getByRole('img', { name: 'Tenant daily energy performance comparison', exact: true })).toBeVisible()
   mkdirSync('tmp/pdfs', { recursive: true })
-  for (const path of ['/dashboard', '/building-operations', '/powerplus/managerial', '/energy-management', '/powerplus/tenant-energy', '/building-management']) {
+  for (const path of ['/dashboard', '/building-operations', '/powerplus/managerial', '/adaptive-ac', '/powerplus/tenant-energy', '/building-management']) {
     await page.goto(path)
     await expect(page.locator('main:visible h1').first()).toBeVisible()
     await page.screenshot({ path: `tmp/pdfs/powerplus-ui-${path.replaceAll('/', '-')}.png`, fullPage: true })
@@ -62,9 +62,9 @@ test('PowerPlus uses existing system pages and removes disclosure', async ({ pag
   await expect(page.getByTestId('tse-value')).toContainText('0.72')
   await expect(page.locator('.acmv-efficiency')).toContainText('180')
   await expect(page.locator('.acmv-efficiency')).toContainText('250')
-  for (const name of ['Operational dashboard', 'Adaptive AC', 'Open BMS & assets', 'Data disclosure', 'Feedback & service', 'Community']) await expect(page.getByRole('navigation').getByRole('link', { name, exact: true })).toHaveCount(0)
+  for (const name of ['Operational dashboard', 'Open BMS & assets', 'Data disclosure', 'Feedback & service', 'Community']) await expect(page.getByRole('navigation').getByRole('link', { name, exact: true })).toHaveCount(0)
   await page.goto('/powerplus/adaptive-ac')
-  await expect(page).toHaveURL(/\/energy-management$/)
+  await expect(page).toHaveURL(/\/adaptive-ac$/)
   await expect(page.getByRole('heading', { name: 'Adaptive AC performance plan', exact: true })).toBeVisible()
   await page.goto('/powerplus/open-bms')
   await expect(page).toHaveURL(/\/building-management$/)
