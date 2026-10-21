@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import fs from 'node:fs/promises'
 import ExcelJS from 'exceljs/dist/exceljs.js'
-test.beforeEach(async({page})=>{await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'));await page.route('http://115.66.232.13:25565/**',r=>r.fulfill({body:'Unity'}))})
+test.beforeEach(async({page})=>{await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'));await page.route('http://115.66.232.13:25565/**',r=>r.fulfill({body:'Unity'}))})
 test('all system pages generate scoped in-depth reports', async ({ page }) => {
   for (const [path, system] of [['/building-management','BMS'],['/energy-management','Energy Management'],['/water-management','Water Management'],['/security-cctv','Security and CCTV']]) {
     await page.goto(path)

@@ -24,7 +24,7 @@ test('dashboard saves customized order and restores it after reload; cancel disc
   expect(errors).toEqual([])
 })
 test('block filtering, data updates, management navigation and preloaded twin', async ({ page }) => {
-  await page.addInitScript(() => sessionStorage.setItem('calypso-demo-session', 'admin'))
+  await page.addInitScript(() => sessionStorage.setItem('calypso-demo-session', 'ST-Admin'))
   let twinRequests = 0
   await page.route('http://127.0.0.1:5175/visualiser/**', route => {
     twinRequests++

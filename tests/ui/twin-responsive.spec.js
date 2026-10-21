@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test'
 
 test('cards adapt to viewer size and fullscreen without overwriting saved sizes',async({page})=>{
  await page.setViewportSize({width:1100,height:900})
- await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+ await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
  await page.route('**/visualiser/**',r=>r.fulfill({body:'Unity'}))
  await page.goto('/dashboard/digital-twin')
  const health=page.locator('[data-panel="health"]')

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test('drag a card to bottom-right and retain its edge position after reload', async ({page}) => {
   await page.setViewportSize({width:1440,height:1100})
-  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
   await page.route('http://127.0.0.1:5175/visualiser/**',r=>r.fulfill({body:'Unity'}))
   await page.goto('/dashboard/digital-twin')
   await page.getByRole('button',{name:'Customize twin dashboard'}).click()
@@ -25,7 +25,7 @@ test('drag a card to bottom-right and retain its edge position after reload', as
 
 test('edge docks and optional navigation save without reloading Unity', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1100 })
-  await page.addInitScript(() => sessionStorage.setItem('calypso-demo-session', 'admin'))
+  await page.addInitScript(() => sessionStorage.setItem('calypso-demo-session', 'ST-Admin'))
   let requests = 0
   await page.route('http://127.0.0.1:5175/visualiser/**', route => { requests++; return route.fulfill({ contentType: 'text/html', body: 'Unity preview' }) })
   await page.goto('/dashboard/digital-twin')

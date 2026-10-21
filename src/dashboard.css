@@ -58,3 +58,5 @@ html { scrollbar-gutter: stable; }
 
 /* Give the digital twin the full workspace width on wide monitors. */
 main.twin-wide-page { max-width: none; padding-left: 16px; padding-right: 16px; }
+
+.dashboard-report-access{display:flex;justify-content:flex-end;margin-bottom:18px}

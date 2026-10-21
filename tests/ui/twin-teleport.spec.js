@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test'
 
 test('level focus uses named POI without calling the failing Teleport handler',async({page})=>{
- await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+ await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
  await page.route('http://127.0.0.1:5175/visualiser/**',r=>r.fulfill({contentType:'text/html',body:'<script>window.commands=[];addEventListener("message",e=>commands.push(JSON.parse(e.data)))</script>'}))
  await page.goto('/dashboard/digital-twin')
  await page.getByRole('combobox',{name:'Digital twin location'}).selectOption('block-a')

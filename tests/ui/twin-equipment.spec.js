@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test'
 
 test('equipment location click focuses the mapped Unity POI and selects its data',async({page})=>{
-  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
   await page.route('http://127.0.0.1:5175/visualiser/**',r=>r.fulfill({contentType:'text/html',body:'<script>window.commands=[];addEventListener("message",e=>{if(typeof e.data==="string")commands.push(JSON.parse(e.data))})</script>'}))
   await page.goto('/dashboard/digital-twin')
   await page.getByRole('button',{name:'Locate HVAC Pump System on Level 1',exact:true}).click()

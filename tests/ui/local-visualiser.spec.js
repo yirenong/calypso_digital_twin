@@ -12,7 +12,7 @@ test('local Unity build is served with compression headers and embedded locally'
   expect(asset.headers()['content-type']).toContain(mime)
  }
  expect((await request.get('/visualiser/StartServer.py')).status()).toBe(404)
- await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+ await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
  await page.goto('/dashboard/digital-twin')
  await expect(page.locator('#unityFrame')).toHaveAttribute('src','/visualiser/index.html')
  await expect(page.frameLocator('#unityFrame').locator('#unity-canvas')).toBeVisible()
@@ -21,7 +21,7 @@ test('local Unity build is served with compression headers and embedded locally'
 
 test('Unity render size is bounded and hidden dashboard pauses without reloading',async({page})=>{
  await page.setViewportSize({width:3440,height:1440})
- await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+ await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
  let loads=0
  page.on('request',request=>{if(request.url().endsWith('/visualiser/index.html'))loads++})
  await page.goto('/dashboard/digital-twin')

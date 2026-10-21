@@ -8,15 +8,22 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4175",
     "test": "node --test tests/*.test.js",
-    "test:ui": "playwright test"
+    "test:ui": "playwright test",
+    "dev:backend": "vite --mode backend --host 127.0.0.1 --port 5176",
+    "backend:setup": "node --env-file=.env.backend.local scripts/setup-backend.mjs",
+    "test:backend": "node --env-file=.env.backend-test.local --test tests/backend.integration.js",
+    "test:backend:ui": "node --env-file=.env.backend-test.local node_modules/@playwright/test/cli.js test --config playwright.backend.config.js",
+    "backend:seed-demo": "node --env-file=.env.backend.local scripts/seed-powerplus-demo.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "6.7.2",
+    "@vercel/functions": "^3.10.2",
     "chart.js": "4.5.1",
     "exceljs": "^4.4.0",
     "gridstack": "^14.0.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
+    "pg": "^8.23.1",
     "vue": "^3.5.43",
     "vue-router": "^4.6.4"
   },

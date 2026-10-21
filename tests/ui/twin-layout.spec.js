@@ -1,5 +1,5 @@
 ﻿import {test,expect} from '@playwright/test'
-async function setup(page){await page.setViewportSize({width:1440,height:1100});await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'));await page.route('http://127.0.0.1:5175/visualiser/**',route=>route.fulfill({contentType:'text/html',body:'<script>window.commands=[];addEventListener("message",e=>{if(typeof e.data==="string")commands.push(JSON.parse(e.data))})</script>Twin preview'}));await page.goto('/dashboard/digital-twin')}
+async function setup(page){await page.setViewportSize({width:1440,height:1100});await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'));await page.route('http://127.0.0.1:5175/visualiser/**',route=>route.fulfill({contentType:'text/html',body:'<script>window.commands=[];addEventListener("message",e=>{if(typeof e.data==="string")commands.push(JSON.parse(e.data))})</script>Twin preview'}));await page.goto('/dashboard/digital-twin')}
 test('saved right panels stay inside the viewer when the screen shrinks',async({page})=>{
  await setup(page)
  await page.evaluate(()=>{

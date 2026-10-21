@@ -8,9 +8,10 @@ import SensorsPage from './pages/SensorsPage.vue'
 import ThresholdPage from './pages/ThresholdPage.vue'
 import NotFoundPage from './pages/NotFoundPage.vue'
 import LoginPage from './pages/LoginPage.vue'
-import { isAuthenticated } from './auth'
+import { isAuthenticated, getCurrentAccount } from './auth'
+import PowerPlusPage from './pages/PowerPlusPage.vue'
 
-import { navigation } from './navigation'
+import { navigation, powerPlusNavigation } from './navigation'
 export { navigation } from './navigation'
 
 const pages = { dashboard: DashboardPage, building: BuildingPage, energy: EnergyPage, water: WaterPage, security: SecurityPage }
@@ -19,6 +20,11 @@ export const router = createRouter({
   routes: [
     { path: '/login', component: LoginPage, meta: { title: 'Sign in', public: true } },
     { path: '/', redirect: '/dashboard' },
+    { path: '/powerplus/operational', redirect: '/building-operations' },
+    { path: '/powerplus/adaptive-ac', redirect: '/energy-management' },
+    { path: '/powerplus/open-bms', redirect: '/building-management' },
+    { path: '/dashboard/widgets', redirect: '/dashboard' },
+    ...powerPlusNavigation.map(item => ({ path: item.path, component: PowerPlusPage, meta: { section: item.id, title: item.label, account: 'PowerPlus-Admin' } })),
     ...navigation.map(item => ({ path: item.path, component: pages[item.id], meta: { section: item.id, title: item.label } })),
     ...navigation.filter(item => ['energy', 'water'].includes(item.id)).map(item => ({ path: item.path + '/sensors', component: SensorsPage, meta: { section: item.id, title: item.label + ' sensors' } })),
     ...navigation.map(item => ({ path: item.path + '/thresholds', component: ThresholdPage, meta: { section: item.id, title: item.label + ' thresholds' } })),
@@ -30,5 +36,6 @@ export const router = createRouter({
 
 router.beforeEach(to => {
   if (!to.meta.public && !isAuthenticated()) return { path: '/login', query: { redirect: to.fullPath } }
+  if (to.meta.account && to.meta.account !== getCurrentAccount()) return '/dashboard'
   if (to.path === '/login' && isAuthenticated()) return '/dashboard'
 })

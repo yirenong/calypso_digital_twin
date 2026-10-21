@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test'
 
 test('CCTV card sits alongside charts and replaces them for an individual camera',async({page})=>{
- await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+ await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
  await page.route('http://127.0.0.1:5175/visualiser/**',r=>r.fulfill({body:'Unity'}))
  await page.setViewportSize({width:1920,height:1080})
  await page.goto('/dashboard/digital-twin')
@@ -11,7 +11,7 @@ test('CCTV card sits alongside charts and replaces them for an individual camera
  for(const id of ['energy','water']) await expect(page.locator(`[data-panel="${id}"]`)).toHaveCount(0)
  const camera=page.locator('[data-panel="widget-cctv"]')
  await expect(camera).toBeVisible()
- await expect(camera.getByLabel('Demo footage: Main lobby', {exact:true})).toHaveAttribute('data-camera-id','cam-a-01')
+ await expect(camera.getByLabel('Sample footage: Main lobby', {exact:true})).toHaveAttribute('data-camera-id','cam-a-01')
  await page.getByRole('combobox',{name:'Digital twin item'}).selectOption('all')
  for(const id of ['energy','water','widget-cctv']) await expect(page.locator(`[data-panel="${id}"]`)).toBeVisible()
  for(const [id,series] of [['hvac-pump-level_1','energy'],['water-supply-level_1','water']]){

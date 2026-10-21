@@ -1,23 +1,26 @@
+import { websiteText } from '../shared/presentation.js'
+import { settingsStorage } from './settings-storage.js'
+import { accountStorageKey } from './account-storage.js'
 import { ref, computed } from 'vue'
 import { defaultRules, validateRules, evaluateThresholds, validateSensorRules, evaluateSensorThresholds } from './thresholds'
 import { defaultNotificationInterval, validNotificationInterval, dueNotifications, nextNotificationTime } from './notification-timing'
 export function createNotificationStore(dataApi) {
-  const key = 'calypso.thresholds.v1', historyKey = 'calypso.notifications.v1'
+  const key = accountStorageKey('calypso.thresholds.v1'), historyKey = accountStorageKey('calypso.notifications.v1')
   const error = ref(''), sound = ref(false), browserAlerts = ref(false), audioReady = ref(false)
   let settings
-  try { settings = JSON.parse(localStorage.getItem(key)) } catch {}
+  try { settings = JSON.parse(settingsStorage.getItem(key)) } catch {}
   const rules = ref(settings && !validateRules(settings.rules, dataApi.projectData.blocks) ? settings.rules : defaultRules())
   const sensorRules = ref(settings?.sensorRules && !validateSensorRules(settings.sensorRules, dataApi.projectData.sensors) ? settings.sensorRules : [])
   sound.value = settings?.sound === true
   const intervalMinutes = ref(validNotificationInterval(settings?.intervalMinutes) ? settings.intervalMinutes : defaultNotificationInterval)
   const events = ref([]), active = ref([]), nextReminderAt = ref(null)
-  const timerKey = 'calypso.notification-timers.v1'
+  const timerKey = accountStorageKey('calypso.notification-timers.v1')
   let lastSent = {}
-  try { const saved = JSON.parse(localStorage.getItem(timerKey)); if (saved && typeof saved === 'object' && !Array.isArray(saved)) lastSent = Object.fromEntries(Object.entries(saved).filter(([key, time]) => typeof key === 'string' && Number.isFinite(time) && time >= 0)) } catch {}
-  try { const saved = JSON.parse(localStorage.getItem(historyKey)); if (Array.isArray(saved)) events.value = saved.filter(e => e && typeof e.id === 'string' && typeof e.message === 'string' && typeof e.read === 'boolean').slice(0, 100) } catch {}
+  try { const saved = JSON.parse(settingsStorage.getItem(timerKey)); if (saved && typeof saved === 'object' && !Array.isArray(saved)) lastSent = Object.fromEntries(Object.entries(saved).filter(([key, time]) => typeof key === 'string' && Number.isFinite(time) && time >= 0)) } catch {}
+  try { const saved = JSON.parse(settingsStorage.getItem(historyKey)); if (Array.isArray(saved)) events.value = saved.filter(e => e && typeof e.id === 'string' && typeof e.message === 'string' && typeof e.read === 'boolean').slice(0, 100).map(event => ({ ...event, message: websiteText(event.message) })) } catch {}
   let audio, toastTimer, reminderTimer, disposed = false, firstEvaluation = true
   const toast = ref(null)
-  function persistHistory() { try { localStorage.setItem(historyKey, JSON.stringify(events.value)) } catch { error.value = 'Browser storage is unavailable. Notification history cannot be saved.' } }
+  function persistHistory() { try { settingsStorage.setItem(historyKey, JSON.stringify(events.value)) } catch { error.value = 'Browser storage is unavailable. Notification history cannot be saved.' } }
   function play() {
     if (!sound.value || !audioReady.value || !audio || audio.state !== 'running') return
     const start = audio.currentTime
@@ -54,7 +57,7 @@ export function createNotificationStore(dataApi) {
     for (const alert of fresh) addEvent(`${alert.sensorId ? alert.sensorName + ' (' + alert.sensorId + ') \u00b7 ' : ''}${alert.block} · ${alert.metric}: ${alert.value.toLocaleString('en-SG')} ${alert.unit}, ${alert.direction} ${alert.limit} ${alert.unit}.`, alert.system, false, alert.key)
     if (fresh.length) play()
     lastSent = Object.fromEntries(Object.entries(lastSent).sort((a,b) => b[1] - a[1]).slice(0, 500))
-    try { localStorage.setItem(timerKey, JSON.stringify(lastSent)) } catch { error.value = 'Browser storage is unavailable. Notification timers cannot be preserved on refresh.' }
+    try { settingsStorage.setItem(timerKey, JSON.stringify(lastSent)) } catch { error.value = 'Browser storage is unavailable. Notification timers cannot be preserved on refresh.' }
     clearTimeout(reminderTimer)
     nextReminderAt.value = nextNotificationTime(active.value, lastSent, now, intervalMinutes.value)
     if (!disposed && nextReminderAt.value !== null) reminderTimer = setTimeout(evaluate, Math.max(100, nextReminderAt.value - now))
@@ -63,7 +66,7 @@ export function createNotificationStore(dataApi) {
     error.value = validateRules(next, dataApi.projectData.blocks) || validateSensorRules(nextSensors, dataApi.projectData.sensors)
     if (!validNotificationInterval(nextInterval)) error.value = 'Choose a notification interval from 1 to 60 whole minutes.'
     if (error.value) return false
-    try { localStorage.setItem(key, JSON.stringify({ rules: next, sensorRules: nextSensors, sound: nextSound, intervalMinutes: nextInterval })) }
+    try { settingsStorage.setItem(key, JSON.stringify({ rules: next, sensorRules: nextSensors, sound: nextSound, intervalMinutes: nextInterval })) }
     catch { error.value = 'Browser storage is unavailable. Settings were not saved.'; return false }
     rules.value = structuredClone(next); sensorRules.value = structuredClone(nextSensors); sound.value = nextSound; intervalMinutes.value = nextInterval; evaluate(); return true
   }

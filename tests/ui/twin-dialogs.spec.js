@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test'
 
 test('Unity iframe cannot open blocking error alerts and still receives commands',async({page})=>{
- await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+ await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
  let dialogs=0
  page.on('dialog',async dialog=>{dialogs++;await dialog.dismiss()})
  await page.route('http://127.0.0.1:5175/visualiser/**',r=>r.fulfill({contentType:'text/html',body:'<script>window.received=null;addEventListener("message",e=>{alert("Unity runtime error");window.received=JSON.parse(e.data)})</script>'}))

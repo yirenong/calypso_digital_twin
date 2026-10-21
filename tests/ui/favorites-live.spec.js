@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test'
 
 test('favorites update the retained dashboard immediately after navigation',async({page})=>{
-  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
   await page.route('http://127.0.0.1:5175/visualiser/**',r=>r.fulfill({body:'Unity'}))
   await page.goto('/dashboard')
   await page.getByRole('link',{name:'Energy Management',exact:true}).click()

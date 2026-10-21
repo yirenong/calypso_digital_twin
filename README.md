@@ -26,7 +26,7 @@ Open http://127.0.0.1:5175. Use `npm run build` for production, `npm run preview
 - Compact KPI cards and separate chart rows on fixed management pages. Every chart has independent Hourly, Daily, Weekly, Monthly and Yearly controls, period totals, date ranges and unit labels. Block comparison bars use totals from the selected history window.
 - Energy Management includes today's consumption, month-to-date energy, peak demand (highest hourly average in kW) and average daily energy. These cards respect the block filter and can be favorited/added to the dashboard.
 - Every chart has **From**/**To** and **Apply** controls. Hourly uses date/time at whole hours; Daily uses dates; Weekly uses ISO weeks starting Monday; Monthly uses months; Yearly uses years. Both endpoints are inclusive. Selections are retained per period while that chart is mounted. Invalid ranges keep the last applied chart; ranges without records display an empty state. **Reset** restores all available data for the active period. Available sample-history bounds are shown beneath the inputs. KPI cards remain independent of individual chart ranges.
-- Responsive navigation and a light/dark theme toggle. No backend or authentication is required.
+- Responsive navigation and a light/dark theme toggle. Local development supports demo sign-in; production uses the account backend described below.
 
 ## Separate pages
 
@@ -127,3 +127,73 @@ configured for both local serving and Vercel in `vercel.json`.
 Replace the exported files in that source folder and rebuild to update Unity.
 The dashboard iframe, new-tab link, and command origin use the local deployment URL.
 
+
+## Accounts and backend storage
+
+Both **ST-Admin** and **PowerPlus-Admin** have all current pages and items. Vercel production builds require server sign-in; browser session values cannot grant backend access. Each account has its own dashboard layout, Digital Twin layouts and selected screen, favorites, thresholds, reminder interval, notification history/timers, theme and location filter. Building telemetry remains shared demo data.
+
+Favorites and workspace selections sync automatically. Layout drafts sync after **Save dashboard** / **Save layout**; thresholds sync after **Save thresholds**. The header shows **Saving to account?**, **Saved to account**, or a connection error. Failed writes stay queued in the current browser and retry automatically (or click the status). Sign-out waits for queued changes. Saved preferences load before the workspace renders on every sign-in or refresh, including on a new device. If two devices edit the same setting, the last successful save wins; refresh to load another device's latest changes. Notification delivery still runs while the workspace is open; browser permissions and audio activation remain device-specific.
+
+Existing browser settings are imported only for settings absent from that account's backend. Existing unprefixed settings belong to ST-Admin. Once a server value exists, it takes precedence over an unchanged local cache. Browser storage holds a cache and a retry queue; the database is the persistent account store. A backend loading error shows a Retry screen rather than loading stale defaults.
+
+### Vercel deployment
+
+The backend consists of Node functions at `/api/auth` and `/api/settings` and Postgres on Neon. Vercel serves the existing Vue/Vite frontend and the API functions together. Functions and the database are configured in Singapore. The API rewrite is excluded from the SPA fallback.
+
+1. In your Vercel project's **Settings ? Environment Variables**, add **DATABASE_URL**, using the pooled connection from your local `.env.backend.local`. Set it for the production environment and redeploy this code. Preview environments should use a separate Neon branch and its own DATABASE_URL. Never prefix database credentials with VITE_.
+2. The Calypso database has already been provisioned and initialized. Account passwords are generated separately and stored in the Git-ignored local file `.env.account-credentials`. Production does **not** accept the demo password `admin`.
+3. After deployment, sign in, save a favorite or layout, then sign in from another browser to confirm restoration. No database credential belongs in the browser bundle.
+
+No Vercel deployment was performed from this workspace. The local environment and credential files are ignored by Git and must not be committed.
+
+### Local development
+
+- `npm run dev`: browser-only demo mode on port 5175. Both usernames use password `admin` in this mode only.
+- `npm run dev:backend`: the real API and database on port 5176, using `.env.backend.local` and the generated account passwords.
+- New database setup: copy `.env.example` to `.env.backend.local`, set the pooled DATABASE_URL and optional direct DATABASE_URL_DIRECT, then run `npm run backend:setup`. This applies `migrations/001-account-settings.sql` and creates missing accounts with scrypt password hashes. Existing accounts are preserved. New credentials are written once using exclusive file creation to avoid overwriting credentials.
+- `npm test` checks data contracts, authentication helpers, and account storage separation.
+- `npm run test:backend` and `npm run test:backend:ui` use a separate test branch. Configure its URL in `.env.backend-test.local` with `VITE_ACCOUNT_BACKEND=true` and `CALYPSO_TEST_DATABASE=true`. These tests clear the test branch's Calypso settings, sessions and rate limits. Never point them at production.
+
+Sessions use random, database-backed tokens in HttpOnly, SameSite cookies, with a seven-day expiry and revocation on sign-out. API writes check request origin, restrict accepted setting keys and payload sizes, and derive the account from the session. Sign-in throttling is stored in Postgres so it works across function instances. The app uses node-postgres pooling with Vercel's connection lifecycle helper, following the [Neon Vercel connection guide](https://neon.com/docs/guides/vercel-connection-methods).
+
+## PowerPlus sustainability workspace
+
+The eight-page NTU One-North BMS requirements supplied by the user are applied to **PowerPlus-Admin only**. All original pages remain available to both accounts. ST-Admin cannot open the PowerPlus routes, write PowerPlus settings, or access its read-only building-data API. New PowerPlus forms use the existing account sync service and require the Vercel backend deployment described above for cross-device saving.
+
+| PDF section | PowerPlus page | Implemented behavior / remaining connection |
+| --- | --- | --- |
+| IN2.1 (iii) a | /dashboard | Available sample energy by system and electricity profile; assigned work orders with status and timestamp history. TSE uses 24 synchronized backend demo samples, with component power, cooling load, chilled-water flow and temperatures. |
+| IN2.1 (iii) b | /powerplus/managerial | GFA/NLA profile, sample annual EUI, electricity/water history and MTTR from resolved failure records. Partial-year EUI is labeled YTD. MTBF and fallback MTTR use a labeled demo reliability sample until operational failure records are available. |
+| IN3.1 (ii) | /energy-management (Adaptive AC section) | Environmental sample inputs, landlord area and adaptive coverage, performance targets, contract reference and M&V plan. At least 85% coverage is shown as the PDF target. No equipment control or adaptive optimization is commissioned. |
+| IN3.3 (i) | /powerplus/tenant-energy | Tenant/meter assignments, unique meter ownership, NLA coverage, allocated sample histories, adjacent-period comparisons and tenant report downloads. At least 50% NLA is shown as the PDF target. Separate tenant identities, live meters and verified baselines are not connected. |
+| IN2.1 (iv), (vi) | /building-management (Open BMS & assets section) | Protocol/gateway configuration register, searchable proposed point names, equipment relationship export, read-only authenticated JSON API and handover/training document links. Protocol adapters, controller/register schedules, validated Brick/Haystack/RealEstateCore mappings and contractual owner access require source information. |
+
+These pages support configuration and workflow review; they do not certify the building against the PDF or claim live control. All building telemetry remains the existing illustrative Calypso dataset, with NTU One-North as the PowerPlus profile label until actual site data is supplied. Feedback, work orders and bookings begin empty. Three illustrative tenants (Demo tenant A, B and C) are created once using healthy energy meters from Levels 1?3, with sample floor areas. Existing meter assignments are preserved; deleting demo tenants does not recreate them on refresh.
+
+The read-only API at /api/powerplus documents its resources at the base URL. GET ?resource=assets returns the relationship draft and GET ?resource=points returns point metadata. Both require a PowerPlus server session; sample metadata is static on the server and does not mirror browser-only telemetry mutations.
+
+PowerPlus Dashboard opens the customizable widget layout at `/dashboard`, with exactly two tabs: Dashboard and Digital Twin. Building operations and ACMV details are available at `/building-operations`. Cards across the management pages can be starred, found with the Favorites filter in the widget library, and added to a saved Dashboard layout. The legacy `/dashboard/widgets` address redirects to `/dashboard`; the Digital Twin remains at `/dashboard/digital-twin`. Adaptive AC is integrated into Energy Management, and Open BMS & assets into BMS. The previous three standalone addresses redirect to those pages. Data disclosure has been removed, including its menu entry, route, UI and export helper.
+
+## PowerPlus backend demo telemetry
+
+`npm run backend:seed-demo` applies `migrations/002-powerplus-demo-datasets.sql` and stores the PowerPlus-only simulated dataset in `calypso_demo_datasets`. It preserves existing telemetry and adds the full building snapshot only when absent. The database now contains the locations, systems, equipment, all 21 energy/water sensors, their histories, cameras, and 24 synchronized ACMV samples. Production PowerPlus loads this snapshot through authenticated `GET /api/powerplus?resource=telemetry` before rendering. A backend error is shown with a Retry action; production does not silently replace unavailable backend readings with local fixtures. ST cannot access this dataset.
+
+The latest ACMV snapshot is 12 October 2026, 18:00 SGT: chillers 125 kW, chilled-water pumps 18 kW, condenser-water pumps 12 kW, cooling towers 10 kW and air distribution 15 kW. Total electrical power is 180 kW, cooling load is 250 RT, and instantaneous TSE is **0.72 kW/RT**. Every component and cooling reading has the same timestamp. Cooling is consistent with 6.5 ?C supply, 12 ?C return and the stored water flow. The period metric uses total kWh divided by total RTh, rather than an arithmetic mean of ratios. Missing components, invalid quality, mismatched timestamps and zero cooling load cannot produce a valid efficiency. The water-plus-air calculation follows [BCA energy technical guidance](https://www1.bca.gov.sg/docs/default-source/docs-corp-buildsg/sustainability/20240827_energy-technical-guide_r2-1.pdf?sfvrsn=d8b931ea_0); the numbers are generated examples, not a compliance result.
+
+The dataset also supplies editable demo defaults: 16,000 m? GFA, 10,000 m? NLA, 12,000 m? landlord AC area with 10,800 m? adaptive coverage, CO?/humidity/outdoor-weather values and control setpoints. Reliability examples use 1,000 operating hours, two failures and repairs of three/five hours, producing 500 h MTBF and 4 h MTTR. Existing saved nonempty configuration values are preserved, and real resolved failure records take precedence for MTTR. All examples remain clearly labeled as simulated; no live equipment control is connected.
+
+The existing Calypso historical consumption and ACMV sample window are separate illustrative profiles; the ACMV window ends at 18:00 SGT and is explicitly labeled. Deployment still requires the Vercel setup above. For a new database, run `npm run backend:setup` followed by `npm run backend:seed-demo`. Before backend integration tests, run the seed script with `.env.backend-test.local` so only the isolated test branch is initialized.
+
+Feedback/service and Community pages, navigation and active settings have been removed from PowerPlus. Existing stored records are retained in the database but have no active UI. Both account sidebars display the official BCA Green Mark artwork in a non-clickable badge showing only **Green Mark Certification**, without a status line. The JPEG is sourced from https://file.go.gov.sg/green-mark-logo-jpeg-format.jpg and is stored locally as public/green-mark-logo.jpg.
+
+Visible demo wording is removed across both accounts, including login, headers, sensors, CCTV, charts, reports and PowerPlus pages. Legacy fixture labels from saved preferences or backend snapshots are cleaned for display without changing identifiers. The Green Mark badge has no approval/status text and no link.
+
+## PowerPlus monitoring and AC controls
+
+PowerPlus defaults include customizable cards for Total System Efficiency (TSE), total electricity, total water, waste, rooftop renewable generation, ACMV electricity, lighting electricity and lifts/escalators electricity. Existing layouts receive these cards once, preserving other positions; the camera KPI is replaced with TSE where present. Further customizations remain saved, including removal of a card. Reset layout restores the PowerPlus defaults. ST retains its existing default layout and widget library.
+
+The persisted sustainability snapshot reports 3,280 kWh electricity, 92.1 m3 water, 185 kg waste and 420 kWh rooftop solar for 12 October 2026. End uses reconcile to electricity: ACMV 2,296 kWh, lighting 656 kWh and lifts/escalators 328 kWh. Solar generation is separate from consumption. Location filters scope these snapshot cards; TSE is explicitly site-wide. Missing collection measurements remain unavailable, rather than being fabricated as zero. The seed command adds this snapshot only if absent.
+
+Energy Management includes the Adaptive AC Control System. Apply controls changes a simulated plant immediately; one modeled minute advances every five seconds while running. Controls cover on/off, Adaptive/Manual mode, zone temperature (20?28 C), manual fan speed (20?100%), fresh-air damper (10?100%), CO2 target (600?1,200 ppm), occupancy (0?100%) and outdoor temperature (20?40 C). Adaptive fan demand responds to temperature and CO2; modeled cooling load responds to occupancy, weather and zone setpoint. Fan electrical demand follows a cubic speed approximation. Off means zero plant power/cooling and no defined kW/RT ratio. Pause, resume and reset controls are available. The current simulated TSE is shared with the dashboard card. Applied settings persist through the existing account backend and restore on another device; evolving simulation readings are session-local and do not operate real equipment.
+
+Tenant Energy no longer exposes the participating-tenant form. Existing tenant assignments feed demand, current-day consumption, hourly peak demand, area-normalized intensity, matched-window baseline comparison and an insight message. Charts show the continuously updated simulated demand, interval consumption history and recent versus preceding daily averages. The baseline uses equal-length windows (up to seven days each) and avoids presenting a partial month as an equivalent full month. Offline/faulty meter assignments stop valid live monitoring. Tenant selection and history interval remain available.

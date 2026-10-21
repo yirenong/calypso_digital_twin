@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test'
 
 test('level selection shows both charts and a sensor shows only its own chart',async({page})=>{
-  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+  await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
   await page.route('http://127.0.0.1:5175/visualiser/**',r=>r.fulfill({body:'Unity'}))
   await page.setViewportSize({width:1920,height:1080})
  await page.goto('/dashboard/digital-twin')

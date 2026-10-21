@@ -1,5 +1,5 @@
 // Single shared data module for the Vue dashboard and 3D integration.
-// All numeric readings and histories are demo examples.
+// All numeric readings and histories are sample examples.
 
 // Locations and system assignments
 // Edit sensor names in the sensor definitions below; these are the supplied system locations.
@@ -59,8 +59,8 @@ export function createSystemAssets() {
 }
 
 
-// Demo history generation
-// Deterministic demo histories. UTC grouping avoids host timezone shifts.
+// Sample history generation
+// Deterministic sample histories. UTC grouping avoids host timezone shifts.
 export const chartPeriods = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
 const dayMs = 86400000
 export function aggregateRecords(records, period) {
@@ -117,7 +117,7 @@ export function createDemoPeriods(blocks) {
 
 
 // Individual sensor definitions
-// Individual demo meters. Histories are allocated demo profiles, not measured telemetry.
+// Individual sample meters. Histories are allocated sample profiles, not measured telemetry.
 export function createDemoSensors(blocks, periods, systems) {
   const sensors = []
   for (const block of blocks) {
@@ -132,7 +132,7 @@ export function createDemoSensors(blocks, periods, systems) {
       const faulty = system === 'energy' && block.id === 'block-b' && i === 1
       const history = Object.fromEntries(Object.entries(periods).map(([period, source]) => [period, {
         labels: [...source.labels], rangeLabel: source.rangeLabel, bucketLabel: source.bucketLabel,
-        note: source.note + ' · Allocated demo profile', energy: {}, water: {},
+        note: source.note + ' · Allocated sample profile', energy: {}, water: {},
         [system]: { [id]: source[system][block.id].map(value => value * weight) },
       }]))
       sensors.push({ id, system, blockId: block.id, modelNode: `${system === 'energy' ? 'Energy' : 'Water'}_Meter_${block.id.slice(-1).toUpperCase()}_${String(i + 1).padStart(2, '0')}`, name: `${block.name} ${location}${system === 'energy' ? ' meter' : ''}`, location, locationId: block.id, systemId, systemName: systems.find(s => s.id === systemId).name, online: !offline, faultCode: faulty ? 'SENSOR_SIGNAL_INVALID' : null, faultDetail: faulty ? 'Invalid electrical signal. Check the current transformer and meter wiring.' : '', rate: offline || faulty ? null : rate, expectedMaxRate, today: block[system === 'energy' ? 'energyKwh' : 'waterM3'] * weight, cumulative: Math.round(block[system === 'energy' ? 'energyKwh' : 'waterM3'] * weight * 480 * 10) / 10, lastSeen: offline ? '2026-10-11T14:20:00Z' : '2026-10-12T12:00:00Z', history })
@@ -146,7 +146,7 @@ export function createDemoSensors(blocks, periods, systems) {
 // Standalone ES module: also import this file directly into your 3D application.
 // These are illustrative readings, not live building telemetry.
 export const projectData = {
-  site: { id: 'calypso', name: 'Calypso Building', dataMode: 'Demo data' },
+  site: { id: 'calypso', name: 'Calypso Building', dataMode: 'Sample data' },
   locations, systems,
   // Legacy block IDs and APIs are retained for saved thresholds and integrations.
   blocks: [
@@ -155,7 +155,7 @@ export const projectData = {
     { id: 'block-c', name: 'Level 3', modelNode: 'Level_3', energyKwh: 760, waterM3: 24.1, waterPressureBar: 3.1, tankLevelPercent: 76, waterMetersOnline: 4, waterMetersTotal: 4, waterAlerts: 0, temperatureC: 23.5, occupancy: 78, camerasOnline: 4, camerasTotal: 4 },
   ],
   waterAlerts: [
-    { id: 'water-b-01', blockId: 'block-b', title: 'Meter communication lost', severity: 'Review', status: 'Open', detail: 'Demo meter B04 has stopped reporting. Check power and connectivity.' },
+    { id: 'water-b-01', blockId: 'block-b', title: 'Meter communication lost', severity: 'Review', status: 'Open', detail: 'Sample meter B04 has stopped reporting. Check power and connectivity.' },
   ],
   assets: [
     ...createSystemAssets(),
@@ -164,7 +164,7 @@ export const projectData = {
     { id: 'cam-b-01', blockId: 'block-b', modelNode: 'Camera_B_01', name: 'Car park camera', type: 'CCTV', status: 'Normal' },
     { id: 'cam-c-01', blockId: 'block-c', modelNode: 'Camera_C_01', name: 'Visitor lobby camera', type: 'CCTV', status: 'Normal' },
   ],
-  // A small preview inventory; the building KPI includes cameras outside these demo views.
+  // A small preview inventory; the building KPI includes cameras outside these sample views.
   cameras: [
     { id: 'cam-a-01', blockId: 'block-a', name: 'Main lobby', location: 'Level 1 · Ground floor', source: '/media/cctv-lobby.webm', status: 'Online', demo: true },
     { id: 'cam-b-01', blockId: 'block-b', name: 'Car park', location: 'Level 2 · Outdoor parking', source: '/media/cctv-parking.webm', status: 'Online', demo: true },

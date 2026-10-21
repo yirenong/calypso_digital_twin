@@ -1,12 +1,14 @@
 ﻿<script setup>
 import { ref, computed, provide, watch, onBeforeUnmount, inject } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { signOut } from './auth'
+import { useRoute } from 'vue-router'
+import { signOut, getCurrentAccount } from './auth'
+import { syncStatus, settingsStorage, stopSettingsSync, resumeSettingsSync, flushSettings } from './settings-storage.js'
+import { accountStorageKey } from './account-storage.js'
 import NotificationCenter from './components/NotificationCenter.vue'
+import GreenMarkBadge from './components/GreenMarkBadge.vue'
 import DashboardPage from './pages/DashboardPage.vue'
-import { navigation } from './navigation'
+import { navigationForAccount } from './navigation'
 const route = useRoute()
-const router = useRouter()
 const isDashboard = computed(() => ['/dashboard', '/dashboard/digital-twin'].includes(route.path))
 const dashboardLoaded = ref(false)
 watch(isDashboard, active => { if (active) dashboardLoaded.value = true }, { immediate: true })
@@ -14,11 +16,26 @@ watch(() => route.meta.public, isPublic => { if (isPublic) dashboardLoaded.value
 const logoutDialog = ref(null)
 function requestLogout() { logoutDialog.value.showModal() }
 function cancelLogout() { logoutDialog.value.close() }
-function logout() { cancelLogout(); signOut(); router.push('/login') }
+const logoutError = ref(''), logoutBusy = ref(false)
+async function logout() {
+  if (logoutBusy.value) return
+  logoutBusy.value = true; logoutError.value = ''
+  try { await stopSettingsSync(); await signOut(); window.location.replace('/login') }
+  catch (error) { resumeSettingsSync(); logoutError.value = error.message || 'Could not finish saving. Please retry.' }
+  finally { logoutBusy.value = false }
+}
 const { projectData } = inject('dataApi')
-const dark = ref(true), block = ref('all'), menu = ref(false)
+let workspaceSettings = {}
+try { workspaceSettings = JSON.parse(settingsStorage.getItem(accountStorageKey('calypso.workspace.v1'))) || {} } catch {}
+const dark = ref(workspaceSettings.dark !== false), block = ref(projectData.locations.some(location => location.id === workspaceSettings.block) ? workspaceSettings.block : 'all'), menu = ref(false)
+watch([dark, block], () => {
+  try { settingsStorage.setItem(accountStorageKey('calypso.workspace.v1'), JSON.stringify({ dark: dark.value, block: block.value })) }
+  catch { /* Current selection remains usable. */ }
+})
 provide('workspace-theme', dark)
 provide('workspace-block', block)
+const account = computed(() => { route.path; return getCurrentAccount() })
+const navigation = computed(() => navigationForAccount(account.value))
 const title = computed(() => route.meta.title || 'Calypso')
 watch(() => route.path, () => { menu.value = false })
 function keydown(event) { if (event.key === 'Escape') menu.value = false }
@@ -33,10 +50,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keydown))
       <div class="brand"><img src="/brand.png" alt="Calypso"></div>
       <p class="nav-label">WORKSPACE</p>
       <nav aria-label="Main navigation"><RouterLink v-for="item in navigation" :key="item.id" :class="{ active: route.meta.section === item.id }" :aria-current="route.meta.section === item.id ? 'page' : undefined" :to="item.path"><i aria-hidden="true" :class="`fa-solid fa-${item.icon}`"></i><span>{{ item.label }}</span><i aria-hidden="true" v-if="route.meta.section === item.id" class="fa-solid fa-angle-right nav-arrow"></i></RouterLink></nav>
+      <GreenMarkBadge />
       <div class="sidebar-bottom"><div class="site-icon"><i aria-hidden="true" class="fa-solid fa-building"></i></div><div><strong>Calypso Building</strong><small>{{ projectData.locations.length }} locations</small></div><span class="status-dot"></span></div>
     </aside>
     <div class="workspace">
-      <header class="topbar"><button class="icon-button mobile-menu" aria-label="Toggle navigation" @click="menu = !menu"><i aria-hidden="true" class="fa-solid fa-bars"></i></button><div class="breadcrumb">Calypso <span>/</span> <strong>{{ title }}</strong></div><div class="header-tools"><span class="demo"><span class="status-dot"></span> Demo data</span><button class="icon-button" :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'" @click="dark = !dark"><i aria-hidden="true" :class="`fa-solid fa-${dark ? 'sun' : 'moon'}`"></i></button><NotificationCenter/><span class="avatar" title="Local workspace">CL</span></div></header>
+      <header class="topbar"><button class="icon-button mobile-menu" aria-label="Toggle navigation" @click="menu = !menu"><i aria-hidden="true" class="fa-solid fa-bars"></i></button><div class="breadcrumb">Calypso <span>/</span> <strong>{{ title }}</strong></div><div class="header-tools"><button class="icon-button" :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'" @click="dark = !dark"><i aria-hidden="true" :class="`fa-solid fa-${dark ? 'sun' : 'moon'}`"></i></button><NotificationCenter/><button class="sync-status" :class="syncStatus.state" :title="syncStatus.message" @click="flushSettings().catch(() => {})">{{ syncStatus.message }}</button><span class="account-name">{{ account }}</span><span class="avatar" :title="account">{{ account === 'ST-Admin' ? 'ST' : 'PP' }}</span></div></header>
       <button class="icon-button logout-button" aria-label="Sign out" title="Sign out" @click="requestLogout"><i aria-hidden="true" class="fa-solid fa-arrow-right-from-bracket"></i></button>
       <div v-if="dashboardLoaded" v-show="isDashboard"><DashboardPage /></div>
       <RouterView v-if="!isDashboard"/>
@@ -45,15 +63,24 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keydown))
       <div class="logout-symbol"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></div>
       <h2 id="logout-title">Sign out of Calypso?</h2>
       <p id="logout-description">You’ll need to sign in again to access your workspace.</p>
+      <p v-if="logoutError" role="alert">{{ logoutError }}</p>
       <div class="logout-actions">
         <button type="button" autofocus @click="cancelLogout">Cancel</button>
-        <button type="button" class="primary" @click="logout">Sign out</button>
+        <button type="button" class="primary" :disabled="logoutBusy" @click="logout">Sign out</button>
       </div>
     </dialog>
   </div>
 </template>
 
 <style scoped>
+.sidebar nav { min-height: 0; overflow-y: auto; flex: 1; }
+.sidebar-bottom { flex-shrink: 0; }
+@media (max-width: 760px) { .account-name { display: none; } .header-tools { gap: 8px; } .avatar { flex-shrink: 0; } button.sync-status { padding: 6px 8px; } }
+@media (max-width: 480px) { .header-tools .demo { display: none; } }
+.sync-status { font-size: 11px; color: var(--muted); border: 0; background: transparent; max-width: 230px; }
+.sync-status.error { color: #e7a067; }
+@media (max-width: 760px) { .sync-status { max-width: 110px; font-size: 9px; } }
+.account-name { font-size: 12px; color: var(--muted); }
 .logout-dialog { width: min(420px, calc(100vw - 32px)); padding: 28px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 24px 80px #0005; }
 .logout-dialog::backdrop { background: #050c17aa; backdrop-filter: blur(4px); }
 .logout-symbol { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 20px; border-radius: 12px; background: var(--soft); color: #64bed0; font-size: 18px; }

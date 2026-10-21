@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test'
 
 test('HTTP Unity asset clicks select mapped system data without echoing focus commands',async({page})=>{
  await page.setViewportSize({width:1920,height:1080})
- await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','admin'))
+ await page.addInitScript(()=>sessionStorage.setItem('calypso-demo-session','ST-Admin'))
  await page.route('http://115.66.232.13:25565/**',r=>r.fulfill({contentType:'text/html',body:'<script>window.commands=[];addEventListener("message",e=>{if(typeof e.data==="string")commands.push(JSON.parse(e.data))})</script>'}))
  await page.goto('/dashboard/digital-twin')
  const frame=page.frameLocator('#unityFrame').locator('body')

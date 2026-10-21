@@ -1,4 +1,9 @@
 <script setup>
+import { getCurrentAccount } from '../auth.js'
+import { settingsStorage } from '../settings-storage.js'
+
+import { accountStorageKey } from '../account-storage.js'
+
 import { computed, inject, nextTick, onBeforeUnmount, provide, ref, watch } from 'vue'
 import DigitalTwinViewer from './DigitalTwinViewer.vue'
 import TrendChart from './TrendChart.vue'
@@ -10,14 +15,14 @@ import { twinAssets, unityAssetName } from '../twin-assets'
 
 
 let storedScreen
-try { storedScreen = localStorage.getItem('calypso.twin.active-screen') } catch { /* Overview by default. */ }
+try { storedScreen = settingsStorage.getItem(accountStorageKey('calypso.twin.active-screen')) } catch { /* Overview by default. */ }
 const activeScreen = ref(twinScreens.some(screen => screen.id === storedScreen) ? storedScreen : 'overview')
 const screenDetails = computed(() => twinScreens.find(screen => screen.id === activeScreen.value))
-const layoutKey = computed(() => activeScreen.value === 'overview' ? 'calypso.twin.free-layout.v1' : `calypso.twin.screen.${activeScreen.value}.v1`)
+const layoutKey = computed(() => activeScreen.value === 'overview' ? accountStorageKey('calypso.twin.free-layout.v1') : accountStorageKey(`calypso.twin.screen.${activeScreen.value}.v1`))
 const cloneLayout = value => JSON.parse(JSON.stringify(value))
-const navigationKey = 'calypso.twin.navigation-visible'
+const navigationKey = accountStorageKey('calypso.twin.navigation-visible')
 let sharedNavigation = null
-try { const stored = JSON.parse(localStorage.getItem(navigationKey)); if (typeof stored === 'boolean') sharedNavigation = stored } catch { /* Migrate the current layout below. */ }
+try { const stored = JSON.parse(settingsStorage.getItem(navigationKey)); if (typeof stored === 'boolean') sharedNavigation = stored } catch { /* Migrate the current layout below. */ }
 const panelLibrary = [
   { id: 'navigation', title: 'Screen navigation', description: 'Overview, Energy, Water, Building and Security tabs', x: 0, y: 0, enabled: false },
   { id: 'overview', title: 'Location overview', description: 'Level selector and consumption summary', x: 0, y: 0, enabled: true },
@@ -26,17 +31,17 @@ const panelLibrary = [
   { id: 'water', title: 'Water consumption', description: 'Water history by level', x: 1, y: .87, enabled: true },
   { id: 'health', title: 'Sensor health', description: 'Connected, offline and faulty sensors', x: .5, y: .1, enabled: false },
   { id: 'items', title: 'Item overview', description: 'Select an individual item to filter readings and charts', x: .5, y: .3, enabled: false },
-  ...widgets.map((widget, index) => ({ id: `widget-${widget.id}`, title: `${widget.title} · ${widget.type === 'kpi' ? 'KPI' : ['line', 'bar'].includes(widget.type) ? 'Chart' : widget.type === 'footage' ? 'CCTV' : 'Table'}`, description: `${widget.category} · ${widget.detail || 'Shared dashboard widget'}`, x: .25 + (index % 3) * .2, y: .15 + (index % 4) * .18, enabled: false, widget })),
+  ...widgets.filter(widget => !widget.account || widget.account === getCurrentAccount()).map((widget, index) => ({ id: `widget-${widget.id}`, title: `${widget.title} · ${widget.type === 'kpi' ? 'KPI' : ['line', 'bar'].includes(widget.type) ? 'Chart' : widget.type === 'footage' ? 'CCTV' : 'Table'}`, description: `${widget.category} · ${widget.detail || 'Shared dashboard widget'}`, x: .25 + (index % 3) * .2, y: .15 + (index % 4) * .18, enabled: false, widget })),
 ]
 const librarySearch = ref(''), libraryFilter = ref('all')
-const favoritesKey = 'calypso.twin.favorites.v1'
+const favoritesKey = accountStorageKey('calypso.twin.favorites.v1')
 let storedFavorites
-try { storedFavorites = JSON.parse(localStorage.getItem(favoritesKey)) } catch { /* No saved favorites. */ }
+try { storedFavorites = JSON.parse(settingsStorage.getItem(favoritesKey)) } catch { /* No saved favorites. */ }
 const favorites = ref(Array.isArray(storedFavorites) ? storedFavorites.filter(id => panelLibrary.some(panel => panel.id === id)) : [])
 const favoritesOnly = ref(false)
 function toggleFavorite(id) {
   const next = favorites.value.includes(id) ? favorites.value.filter(value => value !== id) : [...favorites.value, id]
-  try { localStorage.setItem(favoritesKey, JSON.stringify(next)); favorites.value = next }
+  try { settingsStorage.setItem(favoritesKey, JSON.stringify(next)); favorites.value = next }
   catch { layoutNotice.value = 'Could not save favorites in this browser.' }
 }
 const filteredLibrary = computed(() => panelLibrary.filter(panel => {
@@ -46,7 +51,7 @@ const filteredLibrary = computed(() => panelLibrary.filter(panel => {
 const defaults = () => { const result=createTwinPreset(panelLibrary,activeScreen.value); for(const panel of panelLibrary) { const item=result[panel.id];item.dock=item.y>=.85?'bottom':item.x>=.5?'right':'left' } return result }
 function loadScreenLayout(){
 let storedLayout
-try { storedLayout = JSON.parse(localStorage.getItem(layoutKey.value)); if(!storedLayout&&activeScreen.value==='overview')storedLayout=JSON.parse(localStorage.getItem('calypso.twin.layout.v1'))||JSON.parse(localStorage.getItem('calypso.twin.layout.v2')) } catch { /* Default layout. */ }
+try { storedLayout = JSON.parse(settingsStorage.getItem(layoutKey.value)); if(!storedLayout&&activeScreen.value==='overview')storedLayout=JSON.parse(settingsStorage.getItem(accountStorageKey('calypso.twin.layout.v1')))||JSON.parse(settingsStorage.getItem(accountStorageKey('calypso.twin.layout.v2'))) } catch { /* Default layout. */ }
 const initialLayout = defaults()
 for(const key of Object.keys(initialLayout.__sizes)){const value=storedLayout?.__sizes?.[key];if(Number.isFinite(value)&&value>0)initialLayout.__sizes[key]=value}
 for (const panel of panelLibrary) {
@@ -71,7 +76,7 @@ const editing = ref(false), libraryOpen = ref(false), layoutNotice = ref('')
 const sizeSettingsOpen = ref(false)
 
 const layout = computed(() => editing.value ? draftLayout.value : savedLayout.value)
-watch(activeScreen,()=>{ savedLayout.value=loadScreenLayout();draftLayout.value=cloneLayout(savedLayout.value);itemId.value='all';libraryOpen.value=false;sizeSettingsOpen.value=false;layoutNotice.value='';try{localStorage.setItem('calypso.twin.active-screen',activeScreen.value)}catch{/* Session selection still works. */} })
+watch(activeScreen,()=>{ savedLayout.value=loadScreenLayout();draftLayout.value=cloneLayout(savedLayout.value);itemId.value='all';libraryOpen.value=false;sizeSettingsOpen.value=false;layoutNotice.value='';try{settingsStorage.setItem(accountStorageKey('calypso.twin.active-screen'),activeScreen.value)}catch{/* Session selection still works. */} })
 const positionReaders = new Map()
 const viewerViewport = ref({width:1440,height:850,fullscreen:false})
 function capturePosition(id){const value=positionReaders.get(id)?.();if(value&&editing.value)Object.assign(draftLayout.value[id],value)}
@@ -84,9 +89,9 @@ function setGroupSize(key,value){
 function customize() { draftLayout.value = cloneLayout(savedLayout.value); editing.value = true; layoutNotice.value = '' }
 function cancelLayout() { editing.value = false; libraryOpen.value = false; sizeSettingsOpen.value = false; layoutNotice.value = '' }
 function saveLayout() {
-  try { localStorage.setItem(navigationKey, JSON.stringify(draftLayout.value.navigation.enabled)); sharedNavigation = draftLayout.value.navigation.enabled }
+  try { settingsStorage.setItem(navigationKey, JSON.stringify(draftLayout.value.navigation.enabled)); sharedNavigation = draftLayout.value.navigation.enabled }
   catch { layoutNotice.value = 'Could not save navigation visibility. Your changes are still open.'; return }
-  try { localStorage.setItem(layoutKey.value, JSON.stringify(draftLayout.value)); savedLayout.value = cloneLayout(draftLayout.value); editing.value = false; libraryOpen.value = false; sizeSettingsOpen.value = false; layoutNotice.value = 'Digital twin layout saved in this browser.' }
+  try { settingsStorage.setItem(layoutKey.value, JSON.stringify(draftLayout.value)); savedLayout.value = cloneLayout(draftLayout.value); editing.value = false; libraryOpen.value = false; sizeSettingsOpen.value = false; layoutNotice.value = 'Digital twin layout saved.' }
   catch { layoutNotice.value = 'Could not save the layout. Your changes are still open.' }
 }
 provide('twin-panel-layout',{editing,layout,viewport:viewerViewport,resizePanel,capturePosition,registerPosition:(id,reader)=>positionReaders.set(id,reader),unregisterPosition:id=>positionReaders.delete(id),update:(id,position)=>{if(editing.value)Object.assign(draftLayout.value[id],position)},remove:id=>{if(editing.value)draftLayout.value[id].enabled=false}})
@@ -140,7 +145,7 @@ const chartTrends = computed(() => {
   if (!selectedItem.value) return data.value.trends
   const periods = Object.fromEntries(Object.entries(data.value.trends.periods).map(([period, history]) => {
     const series = system => Object.fromEntries(blocks.value.map(block => [block.id, history.labels.map((_, index) => sensors.value.filter(sensor => sensor.blockId === block.id && sensor.system === system).reduce((total, sensor) => total + (sensor.history[period]?.[system]?.[sensor.id]?.[index] || 0), 0))]))
-    return [period, { ...history, energy: series('energy'), water: series('water'), note: history.note + ' · Selected item demo profile' }]
+    return [period, { ...history, energy: series('energy'), water: series('water'), note: history.note + ' · Selected item sample profile' }]
   }))
   return { ...data.value.trends, periods }
 })
@@ -197,7 +202,7 @@ watch(itemId, () => {
 const pointOfInterest = ref('')
 const showAllLevels = ref(true)
 const showAllSystems = ref(true)
-const alertName = ref(''), alertDescription = ref('Demo alert from the dashboard')
+const alertName = ref(''), alertDescription = ref('Sample alert from the dashboard')
 const alertTargets = computed(() => digitalTwinConfig.alertTargets.filter(target => locationId.value === 'all' || target.locationId === locationId.value))
 function showAlert() {
   const target = alertTargets.value.find(target => target.name === alertName.value)
@@ -208,7 +213,7 @@ function showAlert() {
 <template>
   <div class="twin-dashboard">
     <DigitalTwinViewer @asset-selected="selectUnityAsset" @viewport-change="viewerViewport=$event" ref="twinViewer" :accent="screenDetails.color" :show-navigation="layout.navigation.enabled">
-      <template #screens><div class="twin-screen-bar"><div class="screen-brand"><i aria-hidden="true" class="fa-solid fa-cubes"></i><div><strong>CALYPSO</strong><span>{{ screenDetails.description }}</span></div></div><div class="twin-screen-tabs" role="tablist" aria-label="Digital twin screens"><button v-for="screen in twinScreens" :key="screen.id" role="tab" :aria-selected="activeScreen===screen.id" :disabled="editing" :title="editing?'Save or cancel customization before switching screens':screen.description" @click="activeScreen=screen.id"><i aria-hidden="true" :class="`fa-solid fa-${screen.icon}`"></i>{{ screen.label }}</button></div><span class="screen-mode"><span></span> Demo data</span></div></template>
+      <template #screens><div class="twin-screen-bar"><div class="screen-brand"><i aria-hidden="true" class="fa-solid fa-cubes"></i><div><strong>CALYPSO</strong><span>{{ screenDetails.description }}</span></div></div><div class="twin-screen-tabs" role="tablist" aria-label="Digital twin screens"><button v-for="screen in twinScreens" :key="screen.id" role="tab" :aria-selected="activeScreen===screen.id" :disabled="editing" :title="editing?'Save or cancel customization before switching screens':screen.description" @click="activeScreen=screen.id"><i aria-hidden="true" :class="`fa-solid fa-${screen.icon}`"></i>{{ screen.label }}</button></div><span class="screen-mode"><span></span> Sample data</span></div></template>
       <template #actions>
         <template v-if="editing"><button @click="libraryOpen = !libraryOpen; sizeSettingsOpen = false">Add panels</button><button @click="sizeSettingsOpen = !sizeSettingsOpen; libraryOpen = false">Dock sizes</button><button @click="draftLayout = defaults()">Restore default preset</button><button @click="cancelLayout">Cancel</button><button class="primary" @click="saveLayout">Save twin dashboard</button></template>
         <button v-else @click="customize"><i aria-hidden="true" class="fa-solid fa-sliders"></i> Customize twin dashboard</button>

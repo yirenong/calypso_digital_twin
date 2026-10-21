@@ -16,4 +16,4 @@ watch(() => props.scene, () => { elapsed = 0; last = 0 })
 onMounted(() => { frame = requestAnimationFrame(draw) })
 onBeforeUnmount(() => cancelAnimationFrame(frame))
 </script>
-<template><canvas ref="canvas" class="cctv-demo-fallback" width="960" height="540" role="img" :aria-label="`Simulated demo footage: ${name}`" :data-playing="playing"></canvas></template>
+<template><canvas ref="canvas" class="cctv-demo-fallback" width="960" height="540" role="img" :aria-label="`Simulated sample footage: ${name}`" :data-playing="playing"></canvas></template>

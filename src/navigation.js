@@ -5,3 +5,19 @@ export const navigation = [
   { id: 'water', path: '/water-management', label: 'Water Management', icon: 'droplet' },
   { id: 'security', path: '/security-cctv', label: 'Security and CCTV', icon: 'shield-halved' },
 ]
+
+export const powerPlusNavigation = [
+  { id: 'pp-operational', path: '/building-operations', label: 'Building operations', icon: 'gauge-high', requirement: 'IN2.1 (iii) a' },
+  { id: 'pp-managerial', path: '/powerplus/managerial', label: 'Managerial dashboard', icon: 'chart-line', requirement: 'IN2.1 (iii) b' },
+  { id: 'pp-tenants', path: '/powerplus/tenant-energy', label: 'Tenant energy', icon: 'building-user', requirement: 'IN3.3 (i)' },
+]
+
+export const powerPlusSections = [
+  { id: 'pp-air', path: '/energy-management', label: 'Adaptive AC', requirement: 'IN3.1 (ii)' },
+  { id: 'pp-open', path: '/building-management', label: 'Open BMS & assets', requirement: 'IN2.1 (iv), (vi)' },
+  ...powerPlusNavigation,
+]
+
+export function navigationForAccount(account) {
+  return account === 'PowerPlus-Admin' ? [...navigation, ...powerPlusNavigation] : navigation
+}
