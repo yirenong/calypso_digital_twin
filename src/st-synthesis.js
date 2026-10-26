@@ -28,6 +28,8 @@ export async function stRequest(action, params = {}, report) {
   }
   if (!response.ok || data.status === false) {
     console.log('[ST Synthesis] Request failed', { action, status: response.status, upstreamStatus: data.upstreamStatus, error: data.error, diagnostic: data.diagnostic })
+    if (data.code === 'SITE_NAME_UNRESOLVED') throw new Error('We couldn’t find a unique matching site. Check the full site name. Your report has not been sent.')
+    if (data.code === 'INVALID_SITE_NAME') throw new Error('Enter a site name of up to 200 characters.')
     throw new Error(response.status === 401 ? 'Your session has ended. Please sign in again.' : friendly)
   }
   return data

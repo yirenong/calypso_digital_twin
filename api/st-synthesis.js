@@ -52,6 +52,18 @@ export default async function handler(req, res) {
     let form
     if (report) {
       const data = await body(req, 10000)
+      if (data.site_name !== undefined) {
+        if (typeof data.site_name !== 'string' || !data.site_name.trim() || data.site_name.length > 200) return reply(res, 400, { code: 'INVALID_SITE_NAME', error: 'Enter a site name of up to 200 characters.' })
+        if (!tokens.has(base)) await login(base)
+        const { response } = await upstreamRequest(base + 'my_sites', { method: 'GET', headers: { Accept: 'application/json', Authorization: `Bearer ${tokens.get(base)}` }, signal: AbortSignal.timeout(25000) })
+        if (!response.ok) return reply(res, 502, { error: 'Unable to look up the site.' })
+        const payload = await response.json()
+        const normalize = value => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase()
+        const sites = Array.isArray(payload.data) ? payload.data : []
+        const matches = sites.filter(site => normalize(site.name || site.site_name) === normalize(data.site_name))
+        if (matches.length !== 1) return reply(res, 422, { code: 'SITE_NAME_UNRESOLVED', error: matches.length ? 'More than one site matches this name.' : 'No existing site matches this name.' })
+        data.site_id = matches[0].id
+      }
       if (!/^\d+$/.test(String(data.site_id)) || typeof (data.fault_remarks ?? '') !== 'string' || (data.fault_remarks || '').length > 5000) return reply(res, 400, { error: 'Choose a site and keep remarks under 5,000 characters.' })
       form = new URLSearchParams({ trade_id: '10', category_id: '100', impact_id: '1', 'sites[0]': String(data.site_id), type_id: '1', fault_remarks: data.fault_remarks || '' })
     }
