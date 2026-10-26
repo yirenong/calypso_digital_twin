@@ -8,6 +8,8 @@ import NotificationCenter from './components/NotificationCenter.vue'
 import GreenMarkBadge from './components/GreenMarkBadge.vue'
 import DashboardPage from './pages/DashboardPage.vue'
 import { navigationForAccount } from './navigation'
+import { backendEnabled } from './auth'
+import { connectSt } from './st-session.js'
 const route = useRoute()
 const isDashboard = computed(() => ['/dashboard', '/dashboard/digital-twin'].includes(route.path))
 const dashboardLoaded = ref(false)
@@ -35,6 +37,7 @@ watch([dark, block], () => {
 provide('workspace-theme', dark)
 provide('workspace-block', block)
 const account = computed(() => { route.path; return getCurrentAccount() })
+watch(account, value => { if (value === 'ST-Admin' && backendEnabled) connectSt().catch(() => {}) }, { immediate: true })
 const navigation = computed(() => navigationForAccount(account.value))
 const title = computed(() => route.meta.title || 'Calypso')
 watch(() => route.path, () => { menu.value = false })

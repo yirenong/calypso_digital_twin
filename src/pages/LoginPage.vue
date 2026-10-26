@@ -16,7 +16,7 @@ async function submit() {
     return
   }
   const destination = route.query.redirect
-  window.location.replace(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') && !destination.startsWith('/login') ? destination : '/dashboard')
+  window.location.replace(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') && !destination.startsWith('/login') ? destination : username.value === 'ST-Admin' ? '/st/operations' : '/dashboard')
   } catch (failure) { error.value = failure.message || 'Could not connect. Please retry.' }
   finally { busy.value = false }
 }

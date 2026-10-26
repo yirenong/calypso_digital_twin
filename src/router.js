@@ -10,6 +10,7 @@ import NotFoundPage from './pages/NotFoundPage.vue'
 import LoginPage from './pages/LoginPage.vue'
 import { isAuthenticated, getCurrentAccount } from './auth'
 import PowerPlusPage from './pages/PowerPlusPage.vue'
+import StOperationsPage from './pages/StOperationsPage.vue'
 
 import { navigation, powerPlusNavigation } from './navigation'
 export { navigation } from './navigation'
@@ -18,6 +19,7 @@ const pages = { dashboard: DashboardPage, building: BuildingPage, energy: Energy
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    { path: '/st/operations', component: StOperationsPage, meta: { section: 'st-operations', title: 'Facilities operations', account: 'ST-Admin' } },
     { path: '/login', component: LoginPage, meta: { title: 'Sign in', public: true } },
     { path: '/', redirect: '/dashboard' },
     { path: '/powerplus/operational', redirect: '/building-operations' },

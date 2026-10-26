@@ -5,7 +5,9 @@ import { percentCoverage, annualEnergy, workOrderMetrics, tenantUsage, validateT
 import { navigationForAccount, navigation, powerPlusNavigation } from '../src/navigation.js'
 
 test('PowerPlus navigation is account-specific and retains original pages', () => {
-  assert.deepEqual(navigationForAccount('ST-Admin'), navigation)
+  assert.deepEqual(navigationForAccount('ST-Admin').slice(0, navigation.length), navigation)
+  assert.ok(navigationForAccount('ST-Admin').some(item => item.path === '/st/operations'))
+  assert.ok(!navigationForAccount('PowerPlus-Admin').some(item => item.path === '/st/operations'))
   assert.equal(navigationForAccount('PowerPlus-Admin').length, navigation.length + powerPlusNavigation.length)
 })
 test('coverage requires a real denominator and rejects impossible floor areas', () => {

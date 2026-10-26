@@ -1,0 +1,27 @@
+/* Shared, theme-aware scrollbars for the page, navigation and dialogs. */
+:root {
+  --scroll-thumb: #52657b;
+  --scroll-thumb-hover: #71869c;
+  --scroll-track: #172233;
+}
+:root:has(.shell.light), :root:has(.login-page) {
+  --scroll-thumb: #a2b0bf;
+  --scroll-thumb-hover: #7d90a4;
+  --scroll-track: #eef2f6;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: var(--scroll-track); border-radius: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 2px solid var(--scroll-track);
+  border-radius: 10px;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+*::-webkit-scrollbar-corner { background: transparent; }
+@media (forced-colors: active) {
+  * { scrollbar-color: auto; scrollbar-width: auto; }
+}
