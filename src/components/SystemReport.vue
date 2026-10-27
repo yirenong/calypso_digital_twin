@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { inputTypes, inputValue } from '../chart-range'
 import { generateReport, reportBodyHtml, reportHtml, reportCsv, reportSystems } from '../reports'
 import { createReportPdf, createReportExcel } from '../report-exports'
 const props = defineProps({ system: String, data: Object, blockId: String, generator: Function })
 const emit = defineEmits(['close'])
+const dark = inject('workspace-theme', ref(true))
 const panel = ref(null)
 const exporting = ref(false)
 const period = ref('daily'), from = ref(''), to = ref(''), selectedBlock = ref(props.blockId), title = ref(`${reportSystems[props.system]} Report`), notes = ref(''), includeDetails = ref(true), includeInventory = ref(true), report = ref(null), error = ref(''), dirty = ref(false)
@@ -53,7 +54,7 @@ onMounted(() => { document.body.style.overflow = 'hidden'; window.addEventListen
 onBeforeUnmount(() => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', keydown); if (previousFocus?.isConnected) previousFocus.focus() })
 </script>
 <template>
-  <div class="report-modal" @click.self="emit('close')"><section ref="panel" class="report-panel" role="dialog" aria-modal="true" aria-labelledby="report-dialog-title">
+  <div class="report-modal" :class="{ light: !dark }" @click.self="emit('close')"><section ref="panel" class="report-panel" role="dialog" aria-modal="true" aria-labelledby="report-dialog-title">
     <header class="report-topbar"><div><p class="eyebrow">REPORT CENTER</p><h2 id="report-dialog-title">{{ reportSystems[system] }} report</h2></div><div class="report-export-actions"><template v-if="report"><button class="primary" :disabled="dirty || exporting" @click="download('pdf')"><i aria-hidden="true" class="fa-solid fa-file-pdf"></i> Download PDF</button><button class="primary" :disabled="dirty || exporting" @click="download('xlsx')"><i aria-hidden="true" class="fa-solid fa-file-excel"></i> Download Excel</button><button :disabled="dirty || exporting" @click="download('csv')"><i aria-hidden="true" class="fa-solid fa-file-csv"></i> CSV</button><button :disabled="dirty || exporting" @click="download('html')"><i aria-hidden="true" class="fa-solid fa-file-lines"></i> HTML</button><button :disabled="dirty || exporting" @click="download('json')">JSON</button><button :disabled="dirty || exporting" @click="print"><i aria-hidden="true" class="fa-solid fa-print"></i> Print / Save PDF</button></template><button class="icon-button" aria-label="Close report generator" @click="emit('close')"><i aria-hidden="true" class="fa-solid fa-xmark"></i></button></div></header>
     <div class="report-workspace"><aside class="report-options"><h3>Report settings</h3><label>Report title<input v-model="title" maxlength="120" aria-label="Report title"/></label><label>Location scope<select v-model="selectedBlock" aria-label="Report block"><option value="all">All locations</option><option v-for="b in data.blocks" :key="b.id" :value="b.id">{{ b.name }}</option></select></label>
       <label>Interval<select v-model="period" aria-label="Report interval"><option v-for="p in ['hourly','daily','weekly','monthly','yearly']" :key="p" :value="p">{{ p[0].toUpperCase()+p.slice(1) }}</option></select></label><label>From<input :value="from" @input="from = $event.target.value" :type="inputTypes[period]" :step="period === 'hourly' ? 3600 : period === 'yearly' ? 1 : undefined" aria-label="Report From"/></label><label>To<input :value="to" @input="to = $event.target.value" :type="inputTypes[period]" :step="period === 'hourly' ? 3600 : period === 'yearly' ? 1 : undefined" aria-label="Report To"/></label><p v-if="historical" class="report-help">Available: {{ source.rangeLabel }}. Reporting endpoints are inclusive.</p><p v-if="historical" class="report-help">Every requested interval and its comparison are included in PDF and Excel. Missing readings are marked unavailable.</p>
