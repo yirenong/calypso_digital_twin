@@ -10,7 +10,7 @@ test('demo accounts retain their identity and reject invalid credentials and ses
     removeItem: key => storage.delete(key),
   }
   try {
-    for (const username of ['ST-Admin', 'PowerPlus-Admin']) {
+    for (const username of ['ST-Admin', 'PowerPlus-Admin', 'SMM-Midland-Admin']) {
       assert.equal(await signIn(username, 'wrong'), false)
       assert.equal(isAuthenticated(), false)
       assert.equal(await signIn(username, 'admin'), true)

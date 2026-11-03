@@ -1,5 +1,5 @@
 const sessionKey = 'calypso-demo-session'
-const accounts = ['ST-Admin', 'PowerPlus-Admin']
+const accounts = ['ST-Admin', 'PowerPlus-Admin', 'SMM-Midland-Admin']
 export const backendEnabled = import.meta.env?.PROD === true || import.meta.env?.VITE_ACCOUNT_BACKEND === 'true'
 let serverAccount = null
 

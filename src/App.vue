@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, computed, provide, watch, onBeforeUnmount, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import { signOut, getCurrentAccount } from './auth'
@@ -57,7 +57,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keydown))
       <div class="sidebar-bottom"><div class="site-icon"><i aria-hidden="true" class="fa-solid fa-building"></i></div><div><strong>Calypso Building</strong><small>{{ projectData.locations.length }} locations</small></div><span class="status-dot"></span></div>
     </aside>
     <div class="workspace">
-      <header class="topbar"><button class="icon-button mobile-menu" aria-label="Toggle navigation" @click="menu = !menu"><i aria-hidden="true" class="fa-solid fa-bars"></i></button><div class="breadcrumb">Calypso <span>/</span> <strong>{{ title }}</strong></div><div class="header-tools"><button class="icon-button" :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'" @click="dark = !dark"><i aria-hidden="true" :class="`fa-solid fa-${dark ? 'sun' : 'moon'}`"></i></button><NotificationCenter/><button class="sync-status" :class="syncStatus.state" :title="syncStatus.message" @click="flushSettings().catch(() => {})">{{ syncStatus.message }}</button><span class="account-name">{{ account }}</span><span class="avatar" :title="account">{{ account === 'ST-Admin' ? 'ST' : 'PP' }}</span></div></header>
+      <header class="topbar"><button class="icon-button mobile-menu" aria-label="Toggle navigation" @click="menu = !menu"><i aria-hidden="true" class="fa-solid fa-bars"></i></button><div class="breadcrumb">Calypso <span>/</span> <strong>{{ title }}</strong></div><div class="header-tools"><button class="icon-button" :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'" @click="dark = !dark"><i aria-hidden="true" :class="`fa-solid fa-${dark ? 'sun' : 'moon'}`"></i></button><NotificationCenter/><button class="sync-status" :class="syncStatus.state" :title="syncStatus.message" @click="flushSettings().catch(() => {})">{{ syncStatus.message }}</button><span class="account-name">{{ account }}</span><span class="avatar" :title="account">{{ account === 'ST-Admin' ? 'ST' : account === 'PowerPlus-Admin' ? 'PP' : 'SMM' }}</span></div></header>
       <button class="icon-button logout-button" aria-label="Sign out" title="Sign out" @click="requestLogout"><i aria-hidden="true" class="fa-solid fa-arrow-right-from-bracket"></i></button>
       <div v-if="dashboardLoaded" v-show="isDashboard"><DashboardPage /></div>
       <RouterView v-if="!isDashboard"/>

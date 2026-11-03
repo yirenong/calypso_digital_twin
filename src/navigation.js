@@ -19,5 +19,7 @@ export const powerPlusSections = [
 ]
 
 export function navigationForAccount(account) {
-  return account === 'PowerPlus-Admin' ? [...navigation, ...powerPlusNavigation] : [...navigation, { id: 'st-operations', path: '/st/operations', label: 'Facilities operations', icon: 'clipboard-list' }]
+  if (account === 'PowerPlus-Admin') return [...navigation, ...powerPlusNavigation]
+  if (account === 'ST-Admin') return [...navigation, { id: 'st-operations', path: '/st/operations', label: 'Facilities operations', icon: 'clipboard-list' }]
+  return [...navigation]
 }

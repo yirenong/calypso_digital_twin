@@ -16,6 +16,10 @@ test('account storage separates all workspace settings and preserves existing ST
       assert.equal(saved.has(accountStorageKey(key)), false)
       saved.set(accountStorageKey(key), 'PowerPlus settings')
       await signOut()
+      await signIn('SMM-Midland-Admin', 'admin')
+      assert.equal(saved.has(accountStorageKey(key)), false)
+      saved.set(accountStorageKey(key), 'Midland settings')
+      await signOut()
       await signIn('ST-Admin', 'admin')
       assert.equal(saved.get(accountStorageKey(key)), 'ST settings')
     }

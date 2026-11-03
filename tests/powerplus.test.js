@@ -5,6 +5,7 @@ import { percentCoverage, annualEnergy, workOrderMetrics, tenantUsage, validateT
 import { navigationForAccount, navigation, powerPlusNavigation } from '../src/navigation.js'
 
 test('PowerPlus navigation is account-specific and retains original pages', () => {
+  assert.deepEqual(navigationForAccount('SMM-Midland-Admin'), navigation)
   assert.deepEqual(navigationForAccount('ST-Admin').slice(0, navigation.length), navigation)
   assert.ok(navigationForAccount('ST-Admin').some(item => item.path === '/st/operations'))
   assert.ok(!navigationForAccount('PowerPlus-Admin').some(item => item.path === '/st/operations'))

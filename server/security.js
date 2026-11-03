@@ -3,7 +3,7 @@ import { randomBytes, scrypt as scryptCallback, timingSafeEqual, createHash } fr
 import { promisify } from 'node:util'
 
 const scrypt = promisify(scryptCallback)
-export const accounts = ['ST-Admin', 'PowerPlus-Admin']
+export const accounts = ['ST-Admin', 'PowerPlus-Admin', 'SMM-Midland-Admin']
 export const cookieName = 'calypso_session'
 export const tokenHash = value => createHash('sha256').update(value).digest('hex')
 export async function hashPassword(password) {

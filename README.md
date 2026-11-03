@@ -154,9 +154,9 @@ No Vercel deployment was performed from this workspace. The local environment an
 
 ### Local development
 
-- `npm run dev`: browser-only demo mode on port 5175. Both usernames use password `admin` in this mode only.
+- `npm run dev`: browser-only demo mode on port 5175. All three usernames use password `admin` in this mode only.
 - `npm run dev:backend`: the real API and database on port 5176, using `.env.backend.local` and the generated account passwords.
-- New database setup: copy `.env.example` to `.env.backend.local`, set the pooled DATABASE_URL and optional direct DATABASE_URL_DIRECT, then run `npm run backend:setup`. This applies `migrations/001-account-settings.sql` and creates missing accounts with scrypt password hashes. Existing accounts are preserved. New credentials are written once using exclusive file creation to avoid overwriting credentials.
+- New database setup: copy `.env.example` to `.env.backend.local`, set the pooled DATABASE_URL and optional direct DATABASE_URL_DIRECT, then run `npm run backend:setup`. This applies the account and dataset migrations and creates missing accounts with scrypt password hashes. Existing accounts are preserved. New credentials are appended to the ignored credential file, preserving existing passwords.
 - `npm test` checks data contracts, authentication helpers, and account storage separation.
 - `npm run test:backend` and `npm run test:backend:ui` use a separate test branch. Configure its URL in `.env.backend-test.local` with `VITE_ACCOUNT_BACKEND=true` and `CALYPSO_TEST_DATABASE=true`. These tests clear the test branch's Calypso settings, sessions and rate limits. Never point them at production.
 
@@ -205,3 +205,7 @@ Energy Management includes the Adaptive AC Control System. Apply controls change
 Tenant Energy no longer exposes the participating-tenant form. Existing tenant assignments feed demand, current-day consumption, hourly peak demand, area-normalized intensity, matched-window baseline comparison and an insight message. Charts show the continuously updated simulated demand, interval consumption history and recent versus preceding daily averages. The baseline uses equal-length windows (up to seven days each) and avoids presenting a partial month as an equivalent full month. Offline/faulty meter assignments stop valid live monitoring. Tenant selection and history interval remain available.
 
 ST-Admin automatically connects to ST Synthesis and preloads accessible sites after account sign-in. Its default sign-in destination is Facilities operations (explicit redirect links are preserved). The operations page includes a searchable site directory, site and selected building/floor/room details, fault and maintenance cards, filters, pagination and a site-aware report form. API diagnostics remain available in a collapsed panel below the workspace. Live verification returned 18 sites and six maintenance records; the current faults endpoint accepts GET (POST returned 405), and pagination totals are read from meta.pagination.total. No production fault was created during verification.
+
+## SMM Midland workspace
+
+`SMM-Midland-Admin` starts with the standard Dashboard, BMS, Energy Management, Water Management, and Security and CCTV pages, including their sensor and threshold pages. Settings are separate from the other accounts. ST facilities operations and PowerPlus-specific pages remain restricted to their respective accounts. Run `npm run backend:setup` to apply migration 003 and create the missing login; its generated password is appended to `.env.account-credentials`. Deploy the updated app and API to enable the account on the hosted site.

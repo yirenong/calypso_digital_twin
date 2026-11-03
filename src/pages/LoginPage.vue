@@ -66,7 +66,7 @@ async function submit() {
           <p v-if="error" class="login-error" role="alert">{{ error }}</p>
           <button class="login-submit" type="submit" :disabled="busy" :aria-busy="busy">Sign in to workspace <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
         </form>
-        <div v-if="!backendEnabled" class="login-demo"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><div><strong>Workspace access</strong><p>Usernames <code>ST-Admin</code> or <code>PowerPlus-Admin</code><br />Password <code>admin</code> for both accounts</p></div></div>
+        <div v-if="!backendEnabled" class="login-demo"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><div><strong>Workspace access</strong><p>Usernames <code>ST-Admin</code>, <code>PowerPlus-Admin</code> or <code>SMM-Midland-Admin</code><br />Password <code>admin</code> for all accounts</p></div></div>
         <p class="login-form-foot">A connected view. Better decisions.</p>
       </div>
       <div class="login-panel-footer"><span>© {{ new Date().getFullYear() }} Calypso</span><span>Building intelligence, simplified.</span></div>

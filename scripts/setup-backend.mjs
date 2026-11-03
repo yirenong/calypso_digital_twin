@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, appendFile } from 'node:fs/promises'
 import { randomBytes } from 'node:crypto'
 import pg from 'pg'
 import { hashPassword, accounts } from '../server/security.js'
@@ -10,6 +10,7 @@ try {
   await client.query('BEGIN')
   await client.query(await readFile(new URL('../migrations/001-account-settings.sql', import.meta.url), 'utf8'))
   await client.query(await readFile(new URL('../migrations/002-powerplus-demo-datasets.sql', import.meta.url), 'utf8'))
+  await client.query(await readFile(new URL('../migrations/003-smm-midland-account.sql', import.meta.url), 'utf8'))
   const credentials = []
   for (const account of accounts) {
     const existing = await client.query('SELECT id FROM calypso_accounts WHERE id = $1', [account])
@@ -20,7 +21,10 @@ try {
   }
   if (credentials.length) {
     // Save credentials before commit so a disk failure cannot strand the new accounts.
-    await writeFile(new URL('../.env.account-credentials', import.meta.url), credentials.join('\n') + '\n', { mode: 0o600, flag: 'wx' })
+    const credentialsFile = new URL('../.env.account-credentials', import.meta.url)
+    const existing = await readFile(credentialsFile, 'utf8').catch(error => { if (error.code === 'ENOENT') return ''; throw error })
+    const separator = existing && !existing.endsWith('\n') ? '\n' : ''
+    await appendFile(credentialsFile, separator + credentials.join('\n') + '\n', { mode: 0o600 })
   }
   await client.query('COMMIT')
   console.log('Backend schema ready. New account passwords, if created, are in .env.account-credentials (ignored by Git).')
